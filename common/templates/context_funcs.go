@@ -20,32 +20,25 @@ import (
 var ErrTooManyCalls = errors.New("Too many calls to this function")
 var ErrTooManyAPICalls = errors.New("Too many potential discord api calls function")
 
-func (c *Context) tmplSendDM(s ...interface{}) string {
-	if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 1) || c.MS == nil {
-		return ""
-	}
+func (c *Context) tmplSendDM(user interface{}, s ...interface{}) string {
+    if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 1) {
+        return ""
+    }
 
-	c.GS.RLock()
-	gName := c.GS.Guild.Name
-	memberID := c.MS.ID
-	c.GS.RUnlock()
+    memberID := targetUserID(user)
+    if memberID == 0 {
+        return ""
+    }
 
-	info := fmt.Sprintf("Custom Command DM From the server **%s**", gName)
+    // Send embed
+    if embed, ok := s[0].(*discordgo.MessageEmbed); ok {
+        bot.SendDMEmbed(memberID, embed)
+        return ""
+    }
 
-	// Send embed
-	if embed, ok := s[0].(*discordgo.MessageEmbed); ok {
-		embed.Footer = &discordgo.MessageEmbedFooter{
-			Text: info,
-		}
-
-		bot.SendDMEmbed(memberID, embed)
-		return ""
-	}
-
-	msg := fmt.Sprint(s...)
-	msg = fmt.Sprintf("%s\n%s", info, msg)
-	bot.SendDM(memberID, msg)
-	return ""
+    msg := fmt.Sprint(s...)
+    bot.SendDM(memberID, msg)
+    return ""
 }
 
 // ChannelArg converts a verity of types of argument into a channel, verifying that it exists
