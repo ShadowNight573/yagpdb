@@ -1262,7 +1262,7 @@ func (c *Context) tmplEditNickname(user interface{}, nickname string) (string, e
 
   id := targetUserID(user)
   if id == 0 {
-    return ""
+    return "", nil
   }
 
   err := common.BotSession.GuildMemberNickname(c.GS.ID, id, nickname)
