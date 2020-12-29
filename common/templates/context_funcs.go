@@ -1255,26 +1255,16 @@ func (c *Context) tmplOnlineCountBots() (int, error) {
 	return botCount, nil
 }
 
-func (c *Context) tmplEditNickname(Nickname string) (string, error) {
+func (c *Context) tmplEditNickname(user interface{}, nickname string) (string, error) {
+  if c.IncreaseCheckCallCounter("edit_nick", 2) {
+    return "", ErrTooManyCalls
+  }
 
-	if c.IncreaseCheckCallCounter("edit_nick", 2) {
-		return "", ErrTooManyCalls
-	}
+  id := targetUserID(user)
+  if id == 0 {
+    return ""
+  }
 
-	if c.MS == nil {
-		return "", nil
-	}
-
-	if strings.Compare(c.MS.Nick, Nickname) == 0 {
-
-		return "", nil
-
-	}
-
-	err := common.BotSession.GuildMemberNickname(c.GS.ID, c.MS.ID, Nickname)
-	if err != nil {
-		return "", err
-	}
-
-	return "", nil
+  err := common.BotSession.GuildMemberNickname(c.GS.ID, id, nickname)
+  return "", err
 }
