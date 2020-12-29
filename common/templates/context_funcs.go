@@ -21,7 +21,7 @@ var ErrTooManyCalls = errors.New("Too many calls to this function")
 var ErrTooManyAPICalls = errors.New("Too many potential discord api calls function")
 
 func (c *Context) tmplSendDM(user interface{}, s ...interface{}) string {
-    if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 1) {
+    if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 3) {
         return ""
     }
 
