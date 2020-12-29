@@ -1129,7 +1129,7 @@ func (c *Context) compileRegex(r string) (*regexp.Regexp, error) {
 		return cached, nil
 	}
 
-	if len(c.RegexCache) >= 10 {
+	if len(c.RegexCache) >= 20 {
 		return nil, ErrTooManyAPICalls
 	}
 
