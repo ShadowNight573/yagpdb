@@ -143,7 +143,10 @@ func (pa *ParsedArgs) Get(index int) interface{} {
 		}
 
 		c := i.(*dstate.ChannelState)
-		return templates.CtxChannelFromCSLocked(c)
+		c.Owner.RLock()
+ 		cop := c.DGoCopy()
+ 		c.Owner.RUnlock()
+ 		return cop
 	case *commands.MemberArg:
 		i := pa.parsed[index].Value
 		if i == nil {

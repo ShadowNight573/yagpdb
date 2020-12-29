@@ -991,7 +991,7 @@ func (c *Context) tmplGetMember(target interface{}) (*discordgo.Member, error) {
 	return member.DGoCopy(), nil
 }
 
-func (c *Context) tmplGetChannel(channel interface{}) (*CtxChannel, error) {
+func (c *Context) tmplGetChannel(channel interface{}) (*dstate.ChannelState, error) {
 
 	if c.IncreaseCheckGenericAPICall() {
 		return nil, ErrTooManyAPICalls
@@ -1008,7 +1008,7 @@ func (c *Context) tmplGetChannel(channel interface{}) (*CtxChannel, error) {
 		return nil, errors.New("Channel not in state")
 	}
 
-	return CtxChannelFromCS(cstate), nil
+	return cstate, nil
 }
 
 func (c *Context) tmplAddReactions(values ...reflect.Value) (reflect.Value, error) {
