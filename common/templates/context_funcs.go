@@ -1066,7 +1066,6 @@ func (c *Context) tmplGetChannel(channel interface{}) (*CtxChannel, error) {
 	if cstate == nil {
 		return nil, errors.New("Channel not in state")
 	}
-
 	CtxChannelFromCS(cstate), nil
 }
 
