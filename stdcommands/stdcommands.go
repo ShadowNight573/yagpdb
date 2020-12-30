@@ -51,6 +51,7 @@ import (
 	"github.com/jonas747/yagpdb/stdcommands/yagstatus"
 	"github.com/jonas747/yagpdb/stdcommands/addspecialserver"
 	"github.com/jonas747/yagpdb/stdcommands/removespecialserver"
+	"github.com/jonas747/yagpdb/stdcommands/specialservers"
 )
 
 var (
@@ -121,6 +122,7 @@ func (p *Plugin) AddCommands() {
 		globalrl.Command,
 		addspecialserver.Command,
 		removespecialserver.Command,
+		specialservers.Command,
 	)
 
 }
