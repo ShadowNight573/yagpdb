@@ -191,13 +191,23 @@ func (c *Context) setupContextFuncs() {
 func (c *Context) setupBaseData() {
 
 	if c.GS != nil {
-        guild := c.GS.Guild
-        if !bot.IsSpecialGuild(c.GS.ID) {
-        		guild = c.GS.DeepCopy(false, true, true, false)
-        	}
-		c.Data["Guild"] = guild
-		c.Data["Server"] = guild
-		c.Data["server"] = guild
+        if c.GS != nil {
+    			var guild *discordgo.Guild
+    			if !bot.IsSpecialGuild(c.GS.ID) {
+        			guild = c.GS.DeepCopy(false, true, true, false)
+    			} else {
+        			guild = c.GS.DeepCopy(false, true, true, true)
+        			guild.Members = make([]*discordgo.Member, len(c.GS.Members))
+            		i := 0
+            		for _, m := range c.GS.Members {
+                		guild.Members[i] = m.DGoCopy()
+                		i++
+            		}
+    			}
+    			c.Data["Guild"] = guild
+    			c.Data["Server"] = guild
+    			c.Data["server"] = guild
+		}
 	}
 
 	if c.CurrentFrame.CS != nil {
