@@ -12,10 +12,9 @@ var Command = &commands.YAGCommand{
 	Cooldown:             2,
 	CmdCategory:          commands.CategoryDebug,
 	HideFromCommandsPage: true,
-	Name:                 "addspecialserver",
+	Name:                 "specialservers",
 	Description:          ";))",
 	HideFromHelp:         true,
-	},
 	RunFunc: util.RequireOwner(func(data *dcmd.Data) (interface{}, error) {
 			var whitelisted []int64
 			err := common.RedisPool.Do(radix.Cmd(&whitelisted, "SMEMBERS", "special_servers"))
