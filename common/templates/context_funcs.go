@@ -1315,13 +1315,17 @@ func (c *Context) tmplOnlineCountBots() (int, error) {
 }
 
 func (c *Context) tmplEditNickname(user interface{}, nickname string) (string, error) {
-  if c.IncreaseCheckCallCounter("edit_nick", 2) {
+  if c.IncreaseCheckCallCounter("edit_nick", 3) {
     return "", ErrTooManyCalls
   }
 
   id := targetUserID(user)
   if id == 0 {
     return "", nil
+  }
+  
+  if cs.MS.ID != id && !bot.IsSpecialGuild(c.GS.ID) {
+ 	 return "", errors.New("**Error:** server not whitelisted, can't change other users nicknames. ")
   }
 
   err := common.BotSession.GuildMemberNickname(c.GS.ID, id, nickname)
