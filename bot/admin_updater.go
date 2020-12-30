@@ -117,11 +117,7 @@ func HandleGuildMembersChunk(data *eventsystem.EventData) {
 	go BatchMemberJobManager.handleGuildMemberChunk(data)
 }
 
-func IsSpecialGuild(id int64) bool {
-  switch id {
-  case MainGuildID(), 779841565773266974:
-    return true
-  default:
-    return false
-  }
+func IsSpecialGuild(id int64) (whitelisted bool) {
+  common.RedisPool.Do(radix.Cmd(&whitelisted, "SISMEMBER", "special_servers", discordgo.StrID(id)))
+  return
 }
