@@ -1060,7 +1060,6 @@ func (c *Context) tmplGetChannel(channel interface{}) (*CtxChannel, error) {
 	if cID == 0 {
 		return nil, nil //dont send an error , a nil output would indicate invalid/unknown channel
 	}
-
 	cstate := c.GS.ChannelCopy(true, cID)
 
 	if cstate == nil {
