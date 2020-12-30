@@ -20,7 +20,15 @@ var Command = &commands.YAGCommand{
 		{Name: "server", Type: dcmd.Int},
 	},
 	RunFunc: util.RequireOwner(func(data *dcmd.Data) (interface{}, error) {
-			common.RedisPool.Do(radix.FlatCmd(nil, "SADD", "special_servers", data.Args[0].Int64()))
+			var whitelisted bool
+			err := common.RedisPool.Do(radix.FlatCmd(&whitelisted , "SADD", "special_servers", data.Args[0].Int64()))
+			if err != nil {
+				return "", err
+			}
+			
+			if !whitelisted {
+				return "Server was already whitelisted", nil
+			}
 			return "Whitelisted: " + data.Args[0].Str(), nil
 	}),
 }
