@@ -22,6 +22,6 @@ var Command = &commands.YAGCommand{
 				return "", err
 			}
 			
-			return "**List Of Whitelisted Servers:**\n" + whitelisted, nil
+			return "**List Of Whitelisted Servers:**\n" + string(whitelisted), nil
 	}),
 }
