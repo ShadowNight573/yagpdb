@@ -20,26 +20,92 @@ import (
 var ErrTooManyCalls = errors.New("Too many calls to this function")
 var ErrTooManyAPICalls = errors.New("Too many potential discord api calls function")
 
-func (c *Context) tmplSendDM(user interface{}, s ...interface{}) string {
-    if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 3) {
-        return ""
-    }
+func (c *Context) buildDM(gName string, s ...interface{}) *discordgo.MessageSend {
+	info := fmt.Sprintf("DM enviada pelo servidor **%s**", gName)
+	msgSend := &discordgo.MessageSend{
+		AllowedMentions: discordgo.AllowedMentions{
+			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
+		},
+	}
 
-    memberID := targetUserID(user)
-    if memberID == 0 {
-        return ""
-    }
+	switch t := s[0].(type) {
+	case *discordgo.MessageEmbed:
+		msgSend.Embed = t
+	case *discordgo.MessageSend:
+		msgSend = t
+		if (strings.TrimSpace(msgSend.Content) == "") && (msgSend.File == nil) {
+			return nil
+		}
+	default:
+		msgSend.Content = fmt.Sprintf("%s", fmt.Sprint(s...))
+	}
 
-    // Send embed
-    if embed, ok := s[0].(*discordgo.MessageEmbed); ok {
-        bot.SendDMEmbed(memberID, embed)
-        return ""
-    }
+	if c.GS.ID != bot.MainGuildID() {
+		if msgSend.Embed != nil {
+			msgSend.Embed.Footer = &discordgo.MessageEmbedFooter{
+				Text: info,
+			}
+		} else {
+			msgSend.Content = info + "\n" + msgSend.Content
+		}
+	}
 
-    msg := fmt.Sprint(s...)
-    bot.SendDM(memberID, msg)
-    return ""
+	return msgSend
 }
+
+func (c *Context) tmplSendDM(s ...interface{}) string {
+	if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 3) || c.MS == nil {
+		return ""
+	}
+
+	c.GS.RLock()
+	memberID, gName := c.MS.ID, c.GS.Guild.Name
+	c.GS.RUnlock()
+
+	msgSend := c.buildDM(gName, s...)
+	if msgSend == nil {
+		return ""
+	}
+
+	channel, err := common.BotSession.UserChannelCreate(memberID)
+	if err != nil {
+		return ""
+	}
+	_, _ = common.BotSession.ChannelMessageSendComplex(channel.ID, msgSend)
+	return ""
+}
+
+func (c *Context) tmplSendTargetDM(target interface{}, s ...interface{}) string {
+	if bot.IsSpecialGuild(c.GS.ID) {
+		if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 3) {
+			return ""
+		}
+
+		targetID := targetUserID(target)
+		if targetID == 0 {
+			return ""
+		}
+
+		ts, err := bot.GetMember(c.GS.ID, targetID)
+		if err != nil {
+			return ""
+		}
+
+		msgSend := c.buildDM("", s...)
+		if msgSend == nil {
+			return ""
+		}
+
+		channel, err := common.BotSession.UserChannelCreate(ts.ID)
+		if err != nil {
+			return ""
+		}
+		_, _ = common.BotSession.ChannelMessageSendComplex(channel.ID, msgSend)
+	}
+
+	return ""
+}
+
 
 // ChannelArg converts a verity of types of argument into a channel, verifying that it exists
 func (c *Context) ChannelArg(v interface{}) int64 {
@@ -984,7 +1050,7 @@ func (c *Context) tmplGetMember(target interface{}) (*discordgo.Member, error) {
 	return member.DGoCopy(), nil
 }
 
-func (c *Context) tmplGetChannel(channel interface{}) (*dstate.ChannelState, error) {
+func (c *Context) tmplGetChannel(channel interface{}) (*CtxChannel, error) {
 
 	if c.IncreaseCheckGenericAPICall() {
 		return nil, ErrTooManyAPICalls
@@ -1001,7 +1067,7 @@ func (c *Context) tmplGetChannel(channel interface{}) (*dstate.ChannelState, err
 		return nil, errors.New("Channel not in state")
 	}
 
-	return cstate, nil
+	CtxChannelFromCS(cstate), nil
 }
 
 func (c *Context) tmplAddReactions(values ...reflect.Value) (reflect.Value, error) {

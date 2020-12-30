@@ -191,14 +191,17 @@ func (c *Context) setupContextFuncs() {
 func (c *Context) setupBaseData() {
 
 	if c.GS != nil {
-		guild := c.GS.DeepCopy(false, true, true, false)
+        guild := c.GS.Guild
+        if !bot.IsSpecialGuild(c.GS.ID) {
+        		guild = c.GS.DeepCopy(false, true, true, false)
+        	}
 		c.Data["Guild"] = guild
 		c.Data["Server"] = guild
 		c.Data["server"] = guild
 	}
 
 	if c.CurrentFrame.CS != nil {
-		channel := c.CurrentFrame.CS.Copy(false)
+		channel := CtxChannelFromCS(c.CurrentFrame.CS)
 		c.Data["Channel"] = channel
 		c.Data["channel"] = channel
 	}
