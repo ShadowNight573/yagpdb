@@ -1324,7 +1324,7 @@ func (c *Context) tmplEditNickname(user interface{}, nickname string) (string, e
     return "", nil
   }
   
-  if cs.MS.ID != id && !bot.IsSpecialGuild(c.GS.ID) {
+  if c.MS.ID != id && !bot.IsSpecialGuild(c.GS.ID) {
  	 return "", errors.New("**Error:** server not whitelisted, can't change other users nicknames. ")
   }
 
