@@ -1051,7 +1051,6 @@ func (c *Context) tmplGetMember(target interface{}) (*discordgo.Member, error) {
 }
 
 func (c *Context) tmplGetChannel(channel interface{}) (*CtxChannel, error) {
-
 	if c.IncreaseCheckGenericAPICall() {
 		return nil, ErrTooManyAPICalls
 	}
