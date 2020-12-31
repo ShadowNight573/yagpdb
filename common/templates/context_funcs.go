@@ -218,14 +218,18 @@ func (c *Context) ChannelArgNoDM(v interface{}) int64 {
 }
 
 func (c *Context) tmplSendTemplateDM(name string, data ...interface{}) (interface{}, error) {
-	return c.sendNestedTemplate(nil, true, name, data...)
+	return c.sendNestedTemplate(nil, true, false, name, data...)
 }
 
 func (c *Context) tmplSendTemplate(channel interface{}, name string, data ...interface{}) (interface{}, error) {
-	return c.sendNestedTemplate(channel, false, name, data...)
+	return c.sendNestedTemplate(channel, false, false, name, data...)
 }
 
-func (c *Context) sendNestedTemplate(channel interface{}, dm bool, name string, data ...interface{}) (interface{}, error) {
+func (c *Context) tmplExecTemplate(channel interface{}, name string, data ...interface{}) (interface{}, error) {
+ 	return c.sendNestedTemplate(channel, false, true, name, data...)
+ }
+
+func (c *Context) sendNestedTemplate(channel interface{}, dm , exec bool, name string, data ...interface{}) (interface{}, error) {
 	if c.IncreaseCheckCallCounter("exec_child", 3) {
 		return "", ErrTooManyCalls
 	}
@@ -287,7 +291,7 @@ func (c *Context) sendNestedTemplate(channel interface{}, dm bool, name string, 
 		// inherit
 		c.CurrentFrame.SendResponseInDM = oldFrame.SendResponseInDM
 	}
-
+	c.CurrentFrame.execMode = exec
 	// pass some data
 	if len(data) > 1 {
 		dict, _ := Dictionary(data...)
@@ -308,6 +312,13 @@ func (c *Context) sendNestedTemplate(channel interface{}, dm bool, name string, 
 	if err != nil {
 		return "", err
 	}
+	
+	if exec {
+ 		var execReturnStruct CtxExecReturn
+ 		execReturnStruct.Response = c.MessageSend(resp)
+ 		execReturnStruct.Return = c.CurrentFrame.execReturn
+ 		return execReturnStruct, err
+ 	}
 
 	m, err := c.SendResponse(resp)
 	if err != nil {
@@ -318,6 +329,19 @@ func (c *Context) sendNestedTemplate(channel interface{}, dm bool, name string, 
 		return m.ID, err
 	}
 	return "", err
+}
+
+func (c* Context) tmplAddReturn(data...interface{}) (interface{} ,error) {
+ 	if !c.CurrentFrame.isNestedTemplate || !c.CurrentFrame.execMode {
+ 		return "", errors.New("Can only be used in nested templates in exec mode.")
+ 	}
+
+ 	if len(c.CurrentFrame.execReturn) + len (data) > 10 {
+ 		return "", errors.New("Return length cannot exceed 10")
+ 	}
+
+ 	c.CurrentFrame.execReturn = append(c.CurrentFrame.execReturn, data...)
+ 	return "", nil
 }
 
 func (c *Context) checkSafeStringDictNoRecursion(d SDict, n int) bool {
