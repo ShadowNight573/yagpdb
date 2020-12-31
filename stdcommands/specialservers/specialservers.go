@@ -21,7 +21,7 @@ var Command = &commands.YAGCommand{
     Description:          ";))",
     HideFromHelp:         true,
     Arguments: []*dcmd.ArgDef{
-      &dcmd.ArgDef{Name: "Skip", Help: "Entries to skip", Type: dcmd.Int, Default: 0},
+      {Name: "Skip", Help: "Entries to skip", Type: dcmd.Int, Default: 0},
     },
     RunFunc: util.RequireOwner(func(data *dcmd.Data) (interface{}, error) {
       offset := data.Args[0].Int()
@@ -45,7 +45,7 @@ var Command = &commands.YAGCommand{
 
       resp := "**Whitelisted servers**\n"
       for _, v := range results {
-        resp += fmt.Sprintf("`%d`: **%s**\n", v.ID, v.Name)
+        resp += fmt.Sprintf("`%d` : __%s__\n", v.ID, v.Name)
       }
       return resp, nil
     }),
