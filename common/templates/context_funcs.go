@@ -161,6 +161,8 @@ func (c *Context) ChannelArg(v interface{}) int64 {
 	return cid
 }
 
+
+
 // ChannelArgNoDM is the same as ChannelArg but will not accept DM channels
 func (c *Context) ChannelArgNoDM(v interface{}) int64 {
 
@@ -903,6 +905,19 @@ func (c *Context) tmplRemoveRoleName(name string, optionalArgs ...interface{}) (
 	return "", nil
 }
 
+func (c *Context) findRoleByID(id int64) *discordgo.Role {
+ 	c.GS.RLock()
+ 	defer c.GS.RUnlock()
+
+ 	for _, r := range c.GS.Guild.Roles {
+ 		if r.ID == id {
+ 			return r
+ 		}
+ 	}
+
+ 	return nil
+ }
+ 
 func (c *Context) findRoleByName(name string) *discordgo.Role {
 	c.GS.RLock()
 	defer c.GS.RUnlock()
@@ -915,6 +930,38 @@ func (c *Context) findRoleByName(name string) *discordgo.Role {
 
 	return nil
 }
+
+func (c *Context) tmplGetRole(r interface{}) (*discordgo.Role, error) {
+ 	if c.IncreaseCheckGenericAPICall() {
+ 		return nil, ErrTooManyAPICalls
+ 	}
+
+ 	switch t := r.(type) {
+ 	case int, int64:
+ 		return c.findRoleByID(ToInt64(t)), nil
+ 	case string:
+ 		parsed, err := strconv.ParseInt(t, 10, 64)
+ 		if err == nil {
+ 			return c.findRoleByID(parsed), nil
+ 		}
+
+ 		if strings.HasPrefix(t, "<@&") && strings.HasSuffix(t, ">") {
+ 			re := regexp.MustCompile(`\d+`)
+ 			found := re.FindAllString(t, 1)
+ 			if len(found) > 0 {
+ 				parsedMention, err := strconv.ParseInt(found[0], 10, 64)
+ 				if err == nil {
+ 					return c.findRoleByID(parsedMention), nil
+ 				}
+ 			}
+ 		}
+
+ 		return c.findRoleByName(t), nil
+ 	default:
+ 		return nil, nil
+ 	}
+ }
+
 
 func (c *Context) tmplDelResponse(args ...interface{}) string {
 	dur := 10
