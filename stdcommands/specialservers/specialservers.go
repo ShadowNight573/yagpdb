@@ -22,7 +22,7 @@ var Command = &commands.YAGCommand{
     Arguments: []*dcmd.ArgDef{
       &dcmd.ArgDef{Name: "Skip", Help: "Entries to skip", Type: dcmd.Int, Default: 0},
     },
-    RunFunc: func(data *dcmd.Data) (interface{}, error) {
+    RunFunc: util.RequireOwner(func(data *dcmd.Data) (interface{}, error) {
       offset := data.Args[0].Int()
 
       var whitelisted []interface{}
@@ -47,5 +47,5 @@ var Command = &commands.YAGCommand{
         resp += fmt.Sprintf("`%d`: **%s**\n", v.ID, v.Name)
       }
       return resp, nil
-    },
+    }),
 }
