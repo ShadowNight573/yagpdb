@@ -33,7 +33,7 @@ var Command = &commands.YAGCommand{
       
       results, err := models.JoinedGuilds(
         qm.Where("left_at is null"), // Don't include guilds that we left
-        qm.AndIn("id", whitelisted...), // Only whitelisted guilds
+        qm.WhereIn("id in ?", whitelisted...), // Only whitelisted guilds
         qm.OrderBy("id desc"), // Needed so we have consistent output
         qm.Limit(10), // Limit to 10 results
         qm.Offset(offset),
