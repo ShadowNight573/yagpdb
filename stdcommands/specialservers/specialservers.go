@@ -43,9 +43,11 @@ var Command = &commands.YAGCommand{
         return "", err
       }
 
-      resp := "**Whitelisted servers**\n"
+      resp := "**Whitelisted Servers**\n"
       for _, v := range results {
         resp += fmt.Sprintf("`%d` : __%s__\n", v.ID, v.Name)
+      } else {
+        resp += "None"
       }
       return resp, nil
     }),
