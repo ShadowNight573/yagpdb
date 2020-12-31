@@ -8,6 +8,8 @@ import (
     "github.com/jonas747/yagpdb/common"
     "github.com/jonas747/yagpdb/stdcommands/util"
     "github.com/mediocregopher/radix/v3"
+    "github.com/volatiletech/sqlboiler/queries/qm"
+    "github.com/jonas747/yagpdb/bot/models"
 )
 
 var Command = &commands.YAGCommand{
@@ -23,7 +25,7 @@ var Command = &commands.YAGCommand{
     RunFunc: func(data *dcmd.Data) (interface{}, error) {
       offset := data.Args[0].Int()
 
-      var whitelisted []int64
+      var whitelisted []interface{}
       err := common.RedisPool.Do(radix.Cmd(&whitelisted, "SMEMBERS", "special_servers"))
       if err != nil {
           return "", err
