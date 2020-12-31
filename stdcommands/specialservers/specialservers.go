@@ -39,7 +39,7 @@ var Command = &commands.YAGCommand{
         qm.Offset(offset),
       ).AllG(data.Context())
       if err != nil {
-        errors.New("this is it")
+        error.New("this is it")
       }
 
       resp := "**Whitelisted servers**\n"
