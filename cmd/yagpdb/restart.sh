@@ -1,3 +1,4 @@
+screen -r
 killall yagpdb
 git fetch upstream
 git merge upstream/shadow
