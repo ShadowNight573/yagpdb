@@ -649,7 +649,7 @@ func tmplDBCount(ctx *templates.Context) interface{} {
 				userID.Valid = true
 			case string:
 				patternStr := limitString(arg, 256)
-				pattern.String = keyStr
+				pattern.String = patternStr
 				pattern.Valid = true
 			default:
 				dict, err := templates.StringKeyDictionary(arg)
