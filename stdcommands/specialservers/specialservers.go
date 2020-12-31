@@ -2,7 +2,7 @@ package specialservers
 
 import (
     "fmt"
-    "errors"
+    // "errors"
     
     "github.com/jonas747/dcmd"
     "github.com/jonas747/yagpdb/commands"
