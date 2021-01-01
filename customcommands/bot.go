@@ -149,7 +149,7 @@ var cmdListCommands = &commands.YAGCommand{
 			return trigger + response, nil
 		}
 		
-		response = fmt.Sprintf("\n%s\n", strings.Join(cc.Responses, "\n\n---------------\nSeperator for multiple response commands.\n---------------\n\n"))
+		response = fmt.Sprintf("\n%s\n", strings.Join(cc.Responses, "\n\n\n\n------------------------------\Note: This command has multiple responses. This message separates them.\n------------------------------\n\n\n\n"))
 		var buf bytes.Buffer
 		buf.WriteString(response)
 		msg := &discordgo.MessageSend{}
