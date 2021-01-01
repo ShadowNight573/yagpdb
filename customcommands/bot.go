@@ -162,7 +162,6 @@ var cmdListCommands = &commands.YAGCommand{
 		}
 
 		return "", nil
-		}
 	},
 }
 
