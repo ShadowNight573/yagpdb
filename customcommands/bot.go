@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
+	"bytes"
 
 	"github.com/jonas747/yagpdb/analytics"
 	"github.com/jonas747/yagpdb/premium"
