@@ -2,6 +2,7 @@ module github.com/jonas747/yagpdb
 
 go 1.13
 
+replace github.com/jonas747/template => github.com/Pedro-Pessoa/template v1.1.4-2
 require (
 	emperror.dev/errors v0.4.3
 	github.com/AYLIEN/aylien_textapi_go v0.6.0
@@ -43,7 +44,7 @@ require (
 	github.com/jonas747/go-twitter v0.0.0-20200706234916-1d17060b92bc
 	github.com/jonas747/jdshardmanager v1.0.1
 	github.com/jonas747/ogg v0.0.0-20161220051205-b4f6f4cf3757 // indirect
-	github.com/jo3-l/template v1.3.0
+	github.com/jonas747/template v1.1.2
 	github.com/jonas747/when v0.0.3-0.20201118193825-7feeddcd993f
 	github.com/justinian/dice v0.0.0-20170728002755-6a18b51d929c // indirect
 	github.com/karlseguin/ccache v2.0.3+incompatible
