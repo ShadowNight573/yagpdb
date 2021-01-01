@@ -155,7 +155,7 @@ var cmdListCommands = &commands.YAGCommand{
 		buf.WriteString(response)
 		msg := &discordgo.MessageSend{}
 		
-		msg.Content = trigger + "\n" shadow + "\n" + len(trigger)
+		msg.Content = trigger + "\n" + shadow + "\n" + len(trigger)
 		msg.File = &discordgo.File{
 			Name:        "Response.txt",
 			ContentType: "text/plain",
