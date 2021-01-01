@@ -146,15 +146,16 @@ var cmdListCommands = &commands.YAGCommand{
 			response = fmt.Sprintf("\n```\n%s\n```", strings.Join(cc.Responses, "```\n```"))
 		}
 
-		if len(response) <= 2000 {
-			return trigger + "\n" + response, nil
-		}
 
+		if len(response) <= 2000 {
+			return trigger + response, nil
+		}
+		
 		var buf bytes.Buffer
 		buf.WriteString(response)
 		msg := &discordgo.MessageSend{}
 		
-		msg.Content = trigger
+		msg.Content = trigger + "\n" shadow + "\n" + len(trigger)
 		msg.File = &discordgo.File{
 			Name:        "Response.txt",
 			ContentType: "text/plain",
