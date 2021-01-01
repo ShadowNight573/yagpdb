@@ -149,7 +149,7 @@ var cmdListCommands = &commands.YAGCommand{
 
 		var buf bytes.Buffer
 		buf.WriteString(out)
-		msg := *discordgo.MessageSend{}
+		msg := &discordgo.MessageSend{}
 
 		msg.File = &discordgo.File{
 			Name:        "Attachment.txt",
