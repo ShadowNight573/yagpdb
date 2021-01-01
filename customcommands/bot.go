@@ -145,7 +145,10 @@ var cmdListCommands = &commands.YAGCommand{
 			trigger = fmt.Sprintf("#%d - %s - Group: `%s`", cc.LocalID, CommandTriggerType(cc.TriggerType), groupMap[cc.GroupID.Int64])
 			response = fmt.Sprintf("\n```\n%s\n```", strings.Join(cc.Responses, "```\n```"))
 		}
-
+		
+		var shadow int
+		shadow = len(cc.Responses)
+		
 
 		if len(response) <= 2000 {
 			return trigger + response, nil
