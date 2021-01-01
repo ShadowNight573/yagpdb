@@ -147,7 +147,7 @@ var cmdListCommands = &commands.YAGCommand{
 		}
 
 		if len(response) <= 2000 {
-			return strings.Join(trigger, response), nil
+			return trigger + "\n" + response, nil
 		}
 
 		var buf bytes.Buffer
