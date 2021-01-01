@@ -140,25 +140,21 @@ var cmdListCommands = &commands.YAGCommand{
 		var response string
 		if cc.TextTrigger != "" {
 			trigger = fmt.Sprintf("#%d - %s: `%s` - Case sensitive trigger: `%t` - Group: `%s`", cc.LocalID, CommandTriggerType(cc.TriggerType), cc.TextTrigger, cc.TextTriggerCaseSensitive, groupMap[cc.GroupID.Int64])
-			response = fmt.Sprintf("\n```\n%s\n```", strings.Join(cc.Responses, "```\n```"))
 		} else {
 			trigger = fmt.Sprintf("#%d - %s - Group: `%s`", cc.LocalID, CommandTriggerType(cc.TriggerType), groupMap[cc.GroupID.Int64])
-			response = fmt.Sprintf("\n```\n%s\n```", strings.Join(cc.Responses, "```\n```"))
 		}
 		
-		var shadow int
-		shadow = len(cc.Responses)
-		
-
-		if len(response) <= 2000 {
+		response = fmt.Sprintf("\n```\n%s\n```", strings.Join(cc.Responses, "```\n```"))
+		if len(response) <= 2000 - len(trigger) {
 			return trigger + response, nil
 		}
 		
+		response = fmt.Sprintf("\n%s\n", strings.Join(cc.Responses, "One\nTwo"))
 		var buf bytes.Buffer
 		buf.WriteString(response)
 		msg := &discordgo.MessageSend{}
 		
-		msg.Content = trigger + "\n" + string(shadow) + "\n" + string(len(trigger))
+		msg.Content = trigger
 		msg.File = &discordgo.File{
 			Name:        "Response.txt",
 			ContentType: "text/plain",
