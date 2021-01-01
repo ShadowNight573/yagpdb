@@ -147,19 +147,19 @@ var cmdListCommands = &commands.YAGCommand{
 		}
 
 		if len(response) <= 2000 {
-			return response, nil
+			return strings.Join(trigger, response), nil
 		}
 
 		var buf bytes.Buffer
 		buf.WriteString(response)
 		msg := &discordgo.MessageSend{}
-
+		
+		msg.Content = trigger
 		msg.File = &discordgo.File{
 			Name:        "Response.txt",
 			ContentType: "text/plain",
 			Reader:      &buf,
 		}
-		msg.Content = trigger
 		
 		_, err = common.BotSession.ChannelMessageSendComplex(data.CS.ID, msg)
 		if err != nil {
