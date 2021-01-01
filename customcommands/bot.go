@@ -136,27 +136,31 @@ var cmdListCommands = &commands.YAGCommand{
 
 		cc := foundCCS[0]
 
-		var out string
+		var trigger string
+		var response string
 		if cc.TextTrigger != "" {
-			out = fmt.Sprintf("#%d - %s: `%s` - Case sensitive trigger: `%t` - Group: `%s`\n```\n%s\n```", cc.LocalID, CommandTriggerType(cc.TriggerType), cc.TextTrigger, cc.TextTriggerCaseSensitive, groupMap[cc.GroupID.Int64], strings.Join(cc.Responses, "```\n```"))
+			trigger = fmt.Sprintf("#%d - %s: `%s` - Case sensitive trigger: `%t` - Group: `%s`", cc.LocalID, CommandTriggerType(cc.TriggerType), cc.TextTrigger, cc.TextTriggerCaseSensitive, groupMap[cc.GroupID.Int64])
+			response = fmt.Sprintf("\n```\n%s\n```", strings.Join(cc.Responses, "```\n```"))
 		} else {
-			out = fmt.Sprintf("#%d - %s - Group: `%s`\n```\n%s\n```", cc.LocalID, CommandTriggerType(cc.TriggerType), groupMap[cc.GroupID.Int64], strings.Join(cc.Responses, "```\n```"))
+			trigger = fmt.Sprintf("#%d - %s - Group: `%s`", cc.LocalID, CommandTriggerType(cc.TriggerType), groupMap[cc.GroupID.Int64])
+			response = fmt.Sprintf("\n```\n%s\n```", strings.Join(cc.Responses, "```\n```"))
 		}
 
-		if len(out) <= 2000 {
-			return out, nil
+		if len(response) <= 2000 {
+			return response, nil
 		}
 
 		var buf bytes.Buffer
-		buf.WriteString(out)
+		buf.WriteString(response)
 		msg := &discordgo.MessageSend{}
 
 		msg.File = &discordgo.File{
-			Name:        "Attachment.txt",
+			Name:        "Response.txt",
 			ContentType: "text/plain",
 			Reader:      &buf,
 		}
-
+		msg.Content = trigger
+		
 		_, err = common.BotSession.ChannelMessageSendComplex(data.CS.ID, msg)
 		if err != nil {
 			return "", err
