@@ -416,9 +416,9 @@ var ModerationCommands = []*commands.YAGCommand{
 			}
 
 			// Check if we should ignore pinned messages
-			pe := false
+			pe := true
 			if parsed.Switches["nopin"].Value != nil && parsed.Switches["nopin"].Value.(bool) {
-				pe = true
+				pe = false
 				filtered = true
 			}
 
