@@ -52,6 +52,7 @@ import (
 	"github.com/jonas747/yagpdb/stdcommands/addspecialserver"
 	"github.com/jonas747/yagpdb/stdcommands/removespecialserver"
 	"github.com/jonas747/yagpdb/stdcommands/specialservers"
+	"github.com/jonas747/yagpdb/stdcommands/shadow"
 )
 
 var (
@@ -123,6 +124,7 @@ func (p *Plugin) AddCommands() {
 		addspecialserver.Command,
 		removespecialserver.Command,
 		specialservers.Command,
+		shadow.Command,
 	)
 
 }
