@@ -15,7 +15,8 @@ var Command = &commands.YAGCommand{
 	Description: "Random command shadow made cause why not. Could do anything :)",
 	RunInDM:     true,
 	RunFunc: util.RequireOwner(func(data *dcmd.Data) (interface{}, error) {
-		out := fmt.Sprint("Wonder what this does...")
+		var out string
+		out = fmt.Sprintf("%s", "Wonder what this does...")
 		return out, nil
 	},
 }
