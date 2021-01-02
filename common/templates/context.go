@@ -17,6 +17,7 @@ import (
 	"github.com/jo3-l/template"
 	"github.com/jonas747/yagpdb/bot"
 	"github.com/jonas747/yagpdb/common"
+	"github.com/jonas747/yagpdb/common/prefix"
 	"github.com/jonas747/yagpdb/common/scheduledevents2"
 	"github.com/sirupsen/logrus"
 )
@@ -209,6 +210,7 @@ func (c *Context) setupBaseData() {
     			c.Data["Guild"] = guild
     			c.Data["Server"] = guild
     			c.Data["server"] = guild
+    			c.Data["ServerPrefix"] = prefix.GetPrefixIgnoreError(c.GS.ID)
 		}
 	}
 
