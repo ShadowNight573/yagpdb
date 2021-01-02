@@ -18,5 +18,5 @@ var Command = &commands.YAGCommand{
 		var out string
 		out = fmt.Sprintf("%s", "Wonder what this does...")
 		return out, nil
-	},
+	}
 }
