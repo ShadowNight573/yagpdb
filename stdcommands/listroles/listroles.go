@@ -70,7 +70,7 @@ var Command = &commands.YAGCommand{
 			Reader:      &buf,
 		}
 		
-		_, err = common.BotSession.ChannelMessageSendComplex(data.CS.ID, msg)
+		_, err := common.BotSession.ChannelMessageSendComplex(data.CS.ID, msg)
 		if err != nil {
 			return "", err
 		}
