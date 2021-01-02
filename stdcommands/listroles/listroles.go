@@ -49,7 +49,7 @@ var Command = &commands.YAGCommand{
 				if !file {
 					out += fmt.Sprintf("`%-25s: %-19d #%-6x  ME:%5t`\n", r.Name, r.ID, r.Color, me)
 				} else {
-					out += fmt.Sprintf("%-25s: %-19d #%-6x  ME:%5t\n", r.Name, r.ID, r.Color, me)
+					out += fmt.Sprintf("%-25s: %-19d #%-6x  ME:%5t\n\n", r.Name, r.ID, r.Color, me)
 				}
 			}
 		}
