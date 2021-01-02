@@ -17,7 +17,7 @@ package prefix
  }
 
  func DefaultCommandPrefix() string {
- 	defaultPrefix := "!"
+ 	defaultPrefix := "-"
  	if common.Testing {
  		defaultPrefix = "("
  	}
