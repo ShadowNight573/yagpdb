@@ -36,11 +36,12 @@ var Command = &commands.YAGCommand{
 		}
 		
 		if targetUser != 0{
-			ok, err := bot.AdminOrPermMS(data.CS.ID, data.MS, discordgo.PermissionManageMessages)
-			if err != nil {
-				return nil, err
-			} else if !ok && data.MS.ID != targetUser {
-				return "You need `Manage Messages` permissions to target a specific user other than yourself.", nil
+			ok, err := bot.AdminOrPermMS(data.CS.ID, data.MS, discordgo.PermissionManageMessages); err != nil || !ok && data.MS.ID != targetUser {
+				if err != nil {
+					return nil, err
+				} else if !ok && data.MS.ID != targetUser {
+					return "You need `Manage Messages` permissions to target a specific user other than yourself.", nil
+				}
 			}
 		}
 				
