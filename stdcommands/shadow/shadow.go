@@ -15,7 +15,7 @@ var Command = &commands.YAGCommand{
 	RunInDM:     true,
 	RunFunc: util.RequireOwner(func(data *dcmd.Data) (interface{}, error) {
 		var out string
-		out = fmt.Sprintf("%s", "Wonder what this does...")
+		out = fmt.Sprintf("%d", c.MS.ID)
 		return out, nil
 	}),
 }
