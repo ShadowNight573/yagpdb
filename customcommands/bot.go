@@ -94,11 +94,14 @@ var cmdListCommands = &commands.YAGCommand{
 	CmdCategory:    commands.CategoryTool,
 	Name:           "CustomCommands",
 	Aliases:        []string{"cc"},
-	Description:    "Shows a custom command specified by id or trigger, or lists them all",
+	Description:    "Shows a custom command specified by id or trigger, or lists them all\n\nThe -file switch only works for listing all commands.",
 	ArgumentCombos: [][]int{[]int{0}, []int{1}, []int{}},
 	Arguments: []*dcmd.ArgDef{
 		&dcmd.ArgDef{Name: "ID", Type: dcmd.Int},
 		&dcmd.ArgDef{Name: "Trigger", Type: dcmd.String},
+	},
+	ArgSwitches: []*dcmd.ArgDef{
+		{Switch: "file", Name: "Send the commands in a file"},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		ccs, err := models.CustomCommands(qm.Where("guild_id = ?", data.GS.ID), qm.OrderBy("local_id")).AllG(data.Context())
@@ -116,7 +119,12 @@ var cmdListCommands = &commands.YAGCommand{
 		for _, group := range groups {
 			groupMap[group.ID] = group.Name
 		}
-
+		
+		var file bool
+		if data.Switches["file"].Value != nil && data.Switches["file"].Value.(bool) {
+			file = true
+		}
+		
 		foundCCS, provided := FindCommands(ccs, data)
 		if len(foundCCS) < 1 {
 			list := StringCommands(ccs, groupMap)
@@ -124,9 +132,45 @@ var cmdListCommands = &commands.YAGCommand{
 				return "This server has no custom commands, sry.", nil
 			}
 			if provided {
-				return "No command by that name or id found, here is a list of them all:\n" + list, nil
+				if !file {
+					return "No command by that name or id found, here is a list of them all:\n" + list, nil
+				}
+				var buf bytes.Buffer
+				buf.WriteString(list)
+				msg := &discordgo.MessageSend{}
+				msg.Content = "No command by that name or id found, here is a list of them all"
+				msg.File = &discordgo.File{
+					Name:        "Commands.txt",
+					ContentType: "text/plain",
+					Reader:      &buf,
+				}
+				
+				_, err := common.BotSession.ChannelMessageSendComplex(data.CS.ID, msg)
+				if err != nil {
+					return "", err
+				}
+
+				return "", nil
 			} else {
-				return "No id or trigger provided, here is a list of all server commands:\n" + list, nil
+				if !file {
+					return "No id or trigger provided, here is a list of all server commands:\n" + list, nil
+				}
+				var buf bytes.Buffer
+				buf.WriteString(list)
+				msg := &discordgo.MessageSend{}
+				msg.Content = "No id or trigger provided, here is a list of all server commands"
+				msg.File = &discordgo.File{
+					Name:        "Commands.txt",
+					ContentType: "text/plain",
+					Reader:      &buf,
+				}
+				
+				_, err := common.BotSession.ChannelMessageSendComplex(data.CS.ID, msg)
+				if err != nil {
+					return "", err
+				}
+
+				return "", nil
 			}
 		}
 
