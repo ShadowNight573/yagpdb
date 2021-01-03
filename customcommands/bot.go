@@ -127,7 +127,7 @@ var cmdListCommands = &commands.YAGCommand{
 		
 		foundCCS, provided := FindCommands(ccs, data)
 		if len(foundCCS) < 1 {
-			list := StringCommands(ccs, groupMap)
+			list := StringCommands(ccs, groupMap, file)
 			if len(list) == 0 {
 				return "This server has no custom commands, sry.", nil
 			}
@@ -175,7 +175,8 @@ var cmdListCommands = &commands.YAGCommand{
 		}
 
 		if len(foundCCS) > 1 {
-			return "More than 1 matched command\n" + StringCommands(foundCCS, groupMap), nil
+			file = false
+			return "More than 1 matched command\n" + StringCommands(foundCCS, groupMap, file), nil
 		}
 
 		cc := foundCCS[0]
@@ -241,14 +242,22 @@ func FindCommands(ccs []*models.CustomCommand, data *dcmd.Data) (foundCCS []*mod
 	return
 }
 
-func StringCommands(ccs []*models.CustomCommand, gMap map[int64]string) string {
+func StringCommands(ccs []*models.CustomCommand, gMap map[int64]string, file bool) string {
 	out := ""
 	for _, cc := range ccs {
 		switch cc.TextTrigger {
 		case "":
-			out += fmt.Sprintf("`#%3d:` %s - Group: `%s`\n", cc.LocalID, CommandTriggerType(cc.TriggerType).String(), gMap[cc.GroupID.Int64])
+			if !file {
+				out += fmt.Sprintf("`#%3d:` %s - Group: `%s`\n", cc.LocalID, CommandTriggerType(cc.TriggerType).String(), gMap[cc.GroupID.Int64])
+			} else {
+				out += fmt.Sprintf("#%3d: %s - Group: %s\n", cc.LocalID, CommandTriggerType(cc.TriggerType).String(), gMap[cc.GroupID.Int64])
+			}
 		default:
-			out += fmt.Sprintf("`#%3d:` `%s`: %s - Group: `%s`\n", cc.LocalID, cc.TextTrigger, CommandTriggerType(cc.TriggerType).String(), gMap[cc.GroupID.Int64])
+			if !file {
+				out += fmt.Sprintf("`#%3d:` `%s`: %s - Group: `%s`\n", cc.LocalID, cc.TextTrigger, CommandTriggerType(cc.TriggerType).String(), gMap[cc.GroupID.Int64])
+			} else {
+				out += fmt.Sprintf("#%3d: %s: %s - Group: %s\n", cc.LocalID, cc.TextTrigger, CommandTriggerType(cc.TriggerType).String(), gMap[cc.GroupID.Int64])
+			}
 		}
 	}
 
