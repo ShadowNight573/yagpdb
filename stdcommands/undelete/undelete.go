@@ -63,7 +63,7 @@ var Command = &commands.YAGCommand{
 				continue
 			}
 			
-			if msg.Author.ID != targetUser {
+			if targetUser != 0 && msg.Author.ID != targetUser {
 				continue
 			}
 			
