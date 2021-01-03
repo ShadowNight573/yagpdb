@@ -59,7 +59,7 @@ var Command = &commands.YAGCommand{
 				continue
 			}
 
-			if !allUsers && msg.Author.ID != data.Msg.Author.ID {
+			if !allUsers && msg.Author.ID != data.Msg.Author.ID && targetUser == 0 {
 				continue
 			}
 			
