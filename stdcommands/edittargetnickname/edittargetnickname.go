@@ -21,26 +21,31 @@ var Command = &commands.YAGCommand{
         {Name: "Nick", Type: dcmd.String},
     },
     RunFunc: func(data *dcmd.Data) (interface{}, error) {
-        ms, err := bot.GetMember(data.GS.ID, data.Args[0].Int64())
-        if err != nil {
-            return "Member not found.", nil
-        }
+        if bot.IsSpecialGuild {
+            ms, err := bot.GetMember(data.GS.ID, data.Args[0].Int64())
+        
+            if err != nil {
+                return "Member not found.", nil
+            }
 
-        nick := SafeArgString(data, 1)
-        if strings.Compare(ms.Nick, nick) == 0 {
-            return "This is that user's nickname already.", nil
-        }
+            nick := SafeArgString(data, 1)
+            if strings.Compare(ms.Nick, nick) == 0 {
+                return "This is that user's nickname already.", nil
+            }
 
-        err = common.BotSession.GuildMemberNickname(data.GS.ID, ms.ID, nick)
-        if err != nil {
-            return "", err
-        }
+            err = common.BotSession.GuildMemberNickname(data.GS.ID, ms.ID, nick)
+            if err != nil {
+                return "", err
+            }
 
-        if nick == "" {
-            return fmt.Sprintf("The nickname of user <@%d> was removed.", ms.ID), nil
-        }
+            if nick == "" {
+                return fmt.Sprintf("The nickname of user <@%d> was removed.", ms.ID), nil
+            }
 
-        return fmt.Sprintf("The nickname of user <@%d> was updated to `%s`.", ms.ID, nick), nil
+            return fmt.Sprintf("The nickname of user <@%d> was updated to `%s`.", ms.ID, nick), nil
+        } else {
+            return "This server needs to be whitelisted in order to this command.", nil
+        }
     },
 }
 
