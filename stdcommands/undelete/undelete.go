@@ -19,10 +19,12 @@ var Command = &commands.YAGCommand{
 	RequiredArgs: 0,
 	ArgSwitches: []*dcmd.ArgDef{
 		{Switch: "a", Name: "all"},
+		&dcmd.ArgDef{Switch: "u", Name: "user", Type: dcmd.UserID, Default: 0},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		allUsers := data.Switch("a").Value != nil && data.Switch("a").Value.(bool)
-
+		targetUser := data.Switch("user").Int64()
+		
 		if allUsers {
 			if ok, err := bot.AdminOrPermMS(data.CS.ID, data.MS, discordgo.PermissionManageMessages); !ok || err != nil {
 				if err != nil {
@@ -32,6 +34,16 @@ var Command = &commands.YAGCommand{
 				}
 			}
 		}
+		
+		if targetUser != 0 {
+			ok, err := bot.AdminOrPermsMS(data.CS.ID, data.MS, discordgo.PermissionManageMessages)
+			if err != nil {
+				return nil, err
+			} else if !ok && data.MS.ID != targetUser {
+				return "You need `Manage Messages` permissions to target a specific user other than yourself.", nil
+			}
+		}
+				
 
 		resp := "Up to 10 last deleted messages (last hour or 12 hours for premium): \n\n"
 		numFound := 0
@@ -49,7 +61,11 @@ var Command = &commands.YAGCommand{
 			if !allUsers && msg.Author.ID != data.Msg.Author.ID {
 				continue
 			}
-
+			
+			if targetUser != 0 && msg.Author.ID != targetUser
+				continue
+			}
+			
 			precision := common.DurationPrecisionHours
 			if time.Since(msg.ParsedCreated) < time.Hour {
 				precision = common.DurationPrecisionMinutes
