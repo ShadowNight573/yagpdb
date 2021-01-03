@@ -59,14 +59,12 @@ var Command = &commands.YAGCommand{
 				continue
 			}
 			
-			if targetUser != 0 {
-				if !allUsers && msg.Author.ID != data.Msg.Author.ID {
-					continue
-				}
-			} else {
-				if msg.Author.ID != targetUser {
-					continue
-				}
+			if !allUsers && msg.Author.ID != data.Msg.Author.ID && targetUser == 0 {
+				continue
+			}
+			
+			if msg.Author.ID != targetUser {
+				continue
 			}
 			
 			precision := common.DurationPrecisionHours
