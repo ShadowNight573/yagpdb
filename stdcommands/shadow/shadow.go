@@ -9,10 +9,11 @@ import (
 )
 
 var Command = &commands.YAGCommand{
-	CmdCategory: commands.CategoryGeneral,
+	CmdCategory: commands.CategoryDebug,
 	Name:        "shadow",
 	Description: "Random command shadow made cause why not. Could do anything :)",
 	RunInDM:     true,
+	HideFromHelp:         true,
 	RunFunc: util.RequireOwner(func(data *dcmd.Data) (interface{}, error) {
 		var out string
 		out = fmt.Sprintf("%d", data.MS.ID)
