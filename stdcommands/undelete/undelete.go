@@ -35,8 +35,8 @@ var Command = &commands.YAGCommand{
 			}
 		}
 		
-		if targetUser != 0{
-			ok, err := bot.AdminOrPermMS(data.CS.ID, data.MS, discordgo.PermissionManageMessages); err != nil || !ok && data.MS.ID != targetUser {
+		if targetUser != 0 {
+			if ok, err := bot.AdminOrPermMS(data.CS.ID, data.MS, discordgo.PermissionManageMessages); err != nil || !ok && data.MS.ID != targetUser {
 				if err != nil {
 					return nil, err
 				} else if !ok && data.MS.ID != targetUser {
