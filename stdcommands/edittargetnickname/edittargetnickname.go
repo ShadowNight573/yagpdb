@@ -21,7 +21,7 @@ var Command = &commands.YAGCommand{
         {Name: "Nick", Type: dcmd.String},
     },
     RunFunc: func(data *dcmd.Data) (interface{}, error) {
-        if bot.IsSpecialGuild {
+        if bot.IsSpecialGuild(data.GS.ID) {
             ms, err := bot.GetMember(data.GS.ID, data.Args[0].Int64())
         
             if err != nil {
