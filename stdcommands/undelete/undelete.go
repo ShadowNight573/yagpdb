@@ -23,7 +23,7 @@ var Command = &commands.YAGCommand{
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		allUsers := data.Switch("a").Value != nil && data.Switch("a").Value.(bool)
-		targetUser := data.Switch("user").Int64()
+		targetUser := data.Switch("u").Int64()
 		
 		if allUsers {
 			if ok, err := bot.AdminOrPermMS(data.CS.ID, data.MS, discordgo.PermissionManageMessages); !ok || err != nil {
