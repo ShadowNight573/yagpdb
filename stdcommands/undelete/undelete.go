@@ -35,7 +35,7 @@ var Command = &commands.YAGCommand{
 			}
 		}
 		
-		if targetUser {
+		if targetUser != 0{
 			ok, err := bot.AdminOrPermMS(data.CS.ID, data.MS, discordgo.PermissionManageMessages)
 			if err != nil {
 				return nil, err
@@ -62,7 +62,7 @@ var Command = &commands.YAGCommand{
 				continue
 			}
 			
-			if targetUser && msg.Author.ID != targetUser {
+			if targetUser != 0 && msg.Author.ID != targetUser {
 				continue
 			}
 			
