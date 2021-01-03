@@ -53,6 +53,7 @@ import (
 	"github.com/jonas747/yagpdb/stdcommands/removespecialserver"
 	"github.com/jonas747/yagpdb/stdcommands/specialservers"
 	"github.com/jonas747/yagpdb/stdcommands/shadow"
+	"github.com/jonas747/yagpdb/stdcommands/edittargetnickname"
 )
 
 var (
@@ -99,6 +100,7 @@ func (p *Plugin) AddCommands() {
 		viewperms.Command,
 		topgames.Command,
 		xkcd.Command,
+		edittargetnickname.Command,
 
 		// Maintenance
 		stateinfo.Command,
