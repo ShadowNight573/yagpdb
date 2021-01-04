@@ -21,7 +21,7 @@ var cmdHelp = &YAGCommand{
 	},
 
 	RunFunc:  cmdFuncHelp,
-	Cooldown: 10,
+	Cooldown: 2,
 }
 
 func CmdNotFound(search string) string {
@@ -59,7 +59,7 @@ func cmdFuncHelp(data *dcmd.Data) (interface{}, error) {
 		return nil, nil
 	}
 
-	return "You've got mail!", nil
+	return "Check your DMs!", nil
 }
 
 func createInteractiveHelp(userID int64, helpEmbeds []*discordgo.MessageEmbed) (interface{}, error) {
@@ -70,9 +70,8 @@ func createInteractiveHelp(userID int64, helpEmbeds []*discordgo.MessageEmbed) (
 
 	// prepend a introductionairy first page
 	firstPage := &discordgo.MessageEmbed{
-		Title: "YAGPDB Help!",
-		Description: `YAGPDB is a multipurpose discord bot that is configured through the web interface at https://yagpdb.xyz.
-For more in depth help and information you should visit https://docs.yagpdb.xyz/ as this command only shows information about commands.
+		Title: "ASGPDB Help",
+		Description: `For more in depth help and information you should visit https://docs.yagpdb.xyz/ as this command only shows information about commands.
 		
 		
 **Use the emojis under to change pages**`,
