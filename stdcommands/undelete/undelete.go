@@ -15,7 +15,7 @@ var Command = &commands.YAGCommand{
 	CmdCategory:  commands.CategoryTool,
 	Name:         "Undelete",
 	Aliases:      []string{"ud"},
-	Description:  "Views your recent deleted messages, or all users deleted messages (with \"-a\" and manage messages perm) in this channel",
+	Description:  "Views the first 10 recent deleted messages. By default only the current users deleted messages will show.\n\nUse `-a` to view all users deleted messages or `-u` to view a specific users deleted messages.\nBoth `-a` and `-u` require \"Manage Messages\" permission.",
 	RequiredArgs: 0,
 	ArgSwitches: []*dcmd.ArgDef{
 		{Switch: "a", Name: "all"},
