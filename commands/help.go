@@ -71,9 +71,8 @@ func createInteractiveHelp(userID int64, helpEmbeds []*discordgo.MessageEmbed) (
 	// prepend an introductionary first page
 	firstPage := &discordgo.MessageEmbed{
 		Title: "ASGPDB Help",
-		Description: `This bot is a self hosted version of YAGPDB, some new features are included along with this bot that arent in the YAGPDB docs. For more info, you can go to the [website](https://shadownetwork.us/), then go to the control panel and scroll down the page to see everything that has been changed.
-		
-		For more in depth help and information, you should visit https://docs.yagpdb.xyz/ as this command only shows information about commands.
+		Description: `This bot is a self hosted version of YAGPDB, some new features are included along with this bot that aren't in the [YAGPDB documentation](https://docs.yagpdb.xyz/).
+For more info, you can go to the [website](https://shadownetwork.us/), then go to the control panel and scroll down the page to see everything that has been changed.
 		
 		
 **Use the emojis under the message to change pages**`,
