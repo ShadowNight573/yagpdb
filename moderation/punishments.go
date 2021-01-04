@@ -172,7 +172,7 @@ func sendPunishDM(config *Config, dmMsg string, action ModlogAction, gs *dstate.
 	executed, err := ctx.Execute(dmMsg)
 	if err != nil {
 		logger.WithError(err).WithField("guild", gs.ID).Warn("Failed executing pusnishment DM")
-		executed = "Failed executing template."
+		executed = fmt.Sprintf("Failed executing template.\n**Error:** %v", err)
 	}
 
 	if strings.TrimSpace(executed) != "" {
