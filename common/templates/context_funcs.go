@@ -21,7 +21,7 @@ var ErrTooManyCalls = errors.New("Too many calls to this function")
 var ErrTooManyAPICalls = errors.New("Too many potential discord api calls function")
 
 func (c *Context) buildDM(gName string, s ...interface{}) *discordgo.MessageSend {
-	info := fmt.Sprintf("DM from server **%s", gName)
+	info := fmt.Sprintf("DM from server **%s**", gName)
 	msgSend := &discordgo.MessageSend{
 		AllowedMentions: discordgo.AllowedMentions{
 			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
