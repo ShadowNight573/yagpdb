@@ -20,8 +20,8 @@ import (
 var ErrTooManyCalls = errors.New("Too many calls to this function")
 var ErrTooManyAPICalls = errors.New("Too many potential discord api calls function")
 
-func (c *Context) buildDM(extra string, s ...interface{}) *discordgo.MessageSend {
-	info := extra
+func (c *Context) buildDM(gName string, s ...interface{}) *discordgo.MessageSend {
+	info := fmt.Sprintf("DM from server **%s**", gName)
 	msgSend := &discordgo.MessageSend{
 		AllowedMentions: discordgo.AllowedMentions{
 			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
@@ -40,7 +40,7 @@ func (c *Context) buildDM(extra string, s ...interface{}) *discordgo.MessageSend
 		msgSend.Content = fmt.Sprintf("%s", fmt.Sprint(s...))
 	}
 
-	if c.GS.ID != bot.MainGuildID() {
+	if !bot.IsSpecialGuild {
 		if msgSend.Embed != nil {
 			msgSend.Embed.Footer = &discordgo.MessageEmbedFooter{
 				Text: info,
@@ -62,8 +62,7 @@ func (c *Context) tmplSendDM(s ...interface{}) string {
 	memberID, gName := c.MS.ID, c.GS.Guild.Name
 	c.GS.RUnlock()
 	
-	extra := fmt.Sprintf("DM from server **%s**", gName)
-	msgSend := c.buildDM(extra, s...)
+	msgSend := c.buildDM(gName, s...)
 	if msgSend == nil {
 		return ""
 	}
