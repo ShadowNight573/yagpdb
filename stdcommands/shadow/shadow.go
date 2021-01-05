@@ -1,8 +1,9 @@
 package shadow
 
 import (
-	"fmt"
-
+	// "fmt"
+	
+	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dcmd"
 	"github.com/jonas747/yagpdb/commands"
 	"github.com/jonas747/yagpdb/stdcommands/util"
