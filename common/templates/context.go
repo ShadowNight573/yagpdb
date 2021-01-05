@@ -655,6 +655,17 @@ func (s Slice) Set(index int, item interface{}) (string, error) {
 	return "", nil
 }
 
+func (s Slice) Del(index int) (string, error) {
+	if index >= len(s) || index < 0 {
+		return "", errors.New("Index out of bounds")
+	}
+
+	copy(s[index:], s[index+1:])
+	s[len(s)-1] = ""
+	s = s[:len(s)-1]
+	return "", nil
+}
+
 func (s Slice) AppendSlice(slice interface{}) (interface{}, error) {
 	val := reflect.ValueOf(slice)
 	switch val.Kind() {
