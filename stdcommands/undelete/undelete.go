@@ -15,7 +15,8 @@ var Command = &commands.YAGCommand{
 	CmdCategory:  commands.CategoryTool,
 	Name:         "Undelete",
 	Aliases:      []string{"ud"},
-	Description:  "Views the first 10 recent deleted messages. By default only the current users deleted messages will show.\n\nUse `-a` to view all users deleted messages or `-u` to view a specific users deleted messages.\n\nNote that `-u` overrides `-a` meaning even though `-a` might've been specified along with `-u` only messages from the user provided using `-u` will be shown. Both `-a` and `-u` require \"Manage Messages\" permission.",
+	Description:		"Views the first 10 recent deleted messages. By default, only the current user's deleted messages will show.",
+	LongDescription:  "You can use the `-a` flag to view all users delete messages, or `-u` to view a specified user's deleted messages.\nBoth `-a` and `-u` require Manage Messages permission.\nNote: `-u` overrides `-a` meaning even though `-a` might've been specified along with `-u` only messages from the user provided using `-u` will be shown.",
 	RequiredArgs: 0,
 	ArgSwitches: []*dcmd.ArgDef{
 		{Switch: "a", Name: "all"},
