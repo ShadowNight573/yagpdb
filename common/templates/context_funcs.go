@@ -61,7 +61,7 @@ func (c *Context) tmplSendDM(s ...interface{}) string {
 	}
 
 	c.GS.RLock()
-	memberID, gName := c.MS.ID, c.GS.Name
+	memberID, gName := c.MS.ID, c.GS.Guild.Name
 	c.GS.RUnlock()
 
 	msgSend := c.buildDM(gName, s...)
