@@ -25,24 +25,14 @@ var Command = &commands.YAGCommand{
 		allUsers := data.Switch("a").Value != nil && data.Switch("a").Value.(bool)
 		targetUser := data.Switch("u").Int64()
 		
-		if allUsers {
-			if ok, err := bot.AdminOrPermMS(data.CS.ID, data.MS, discordgo.PermissionManageMessages); !ok || err != nil {
-				if err != nil {
-					return nil, err
-				} else if !ok {
-					return "You need `Manage Messages` permissions to view all users deleted messages", nil
-				}
-			}
-		}
-		
-		if targetUser != 0 {
-			ok, err := bot.AdminOrPermMS(data.CS.ID, data.MS, discordgo.PermissionManageMessages) 
-			if err != nil || !ok && data.MS.ID != targetUser {
-				if err != nil {
-					return nil, err
-				} else if !ok && data.MS.ID != targetUser {
-					return "You need `Manage Messages` permissions to target a specific user other than yourself.", nil
-				}
+		if allUsers || targetUser != 0 {
+			ok, err := bot.AdminOrPermMS(data.CS.ID, data.MS, discordgo.PermissionManageMessages)
+			if err != nil {
+				return nil, err
+			} else if !ok && targetUser == 0 {
+				return "You need `Manage Messages` permissions to view all users deleted messages", nil
+			} else if !ok {
+				return "You need `Manage Messages` permissions to target a specific user other than yourself.", nil
 			}
 		}
 				
