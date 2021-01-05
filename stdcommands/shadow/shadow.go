@@ -15,8 +15,7 @@ var Command = &commands.YAGCommand{
 	RunInDM:     true,
 	HideFromHelp:         true,
 	RunFunc: util.RequireOwner(func(data *dcmd.Data) (interface{}, error) {
-		var out string
-		out = fmt.Sprintf("%d", data.MS.ID)
+		out := *discordgo.Message
 		return out, nil
 	}),
 }
