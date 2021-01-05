@@ -15,11 +15,11 @@ var Command = &commands.YAGCommand{
 	CmdCategory:  commands.CategoryTool,
 	Name:         "Undelete",
 	Aliases:      []string{"ud"},
-	Description:  "Views the first 10 recent deleted messages. By default only the current users deleted messages will show.\n\nUse `-a` to view all users deleted messages or `-u` to view a specific users deleted messages.\nBoth `-a` and `-u` require \"Manage Messages\" permission.",
+	Description:  "Views up to 10 recently deleted messages. By default only the current users deleted messages will show.\n\nUse `-a` to view all users deleted messages or `-u` to view a specific users deleted messages.\nBoth `-a` and `-u` require \"Manage Messages\" permission.",
 	RequiredArgs: 0,
 	ArgSwitches: []*dcmd.ArgDef{
 		{Switch: "a", Name: "all"},
-		&dcmd.ArgDef{Switch: "u", Name: "user", Type: dcmd.UserID, Default: 0},
+		{Switch: "u", Name: "user", Type: dcmd.UserID, Default: 0},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		allUsers := data.Switch("a").Value != nil && data.Switch("a").Value.(bool)
@@ -36,7 +36,8 @@ var Command = &commands.YAGCommand{
 		}
 		
 		if targetUser != 0 {
-			if ok, err := bot.AdminOrPermMS(data.CS.ID, data.MS, discordgo.PermissionManageMessages); err != nil || !ok && data.MS.ID != targetUser {
+			ok, err := bot.AdminOrPermMS(data.CS.ID, data.MS, discordgo.PermissionManageMessages) 
+			if err != nil || !ok && data.MS.ID != targetUser {
 				if err != nil {
 					return nil, err
 				} else if !ok && data.MS.ID != targetUser {
