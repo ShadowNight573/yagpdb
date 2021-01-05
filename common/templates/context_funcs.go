@@ -21,7 +21,9 @@ var ErrTooManyCalls = errors.New("Too many calls to this function")
 var ErrTooManyAPICalls = errors.New("Too many potential discord api calls function")
 
 func (c *Context) buildDM(gName string, s ...interface{}) *discordgo.MessageSend {
+
 	info := fmt.Sprintf("DM from server **%s**", gName)
+	
 	msgSend := &discordgo.MessageSend{
 		AllowedMentions: discordgo.AllowedMentions{
 			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
@@ -59,7 +61,7 @@ func (c *Context) tmplSendDM(s ...interface{}) string {
 	}
 
 	c.GS.RLock()
-	memberID, gName := c.MS.ID, c.GS.Guild.Name
+	memberID, gName := c.MS.ID, c.GS.Name
 	c.GS.RUnlock()
 
 	msgSend := c.buildDM(gName, s...)
