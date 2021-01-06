@@ -8,7 +8,6 @@ import (
 	"github.com/jonas747/yagpdb/common"
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/yagpdb/bot"
-	"github.com/jonas747/yagpdb/stdcommands/util"
 )
 
 var Command = &commands.YAGCommand{
@@ -17,6 +16,7 @@ var Command = &commands.YAGCommand{
 	Description: "Responds with bot information",
 	RunInDM:     true,
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
+		botUser := common.BotUser
 		msg := discordgo.MessageEmbed {
 			Author: &discordgo.MessageEmbedAuthor{
 				Name:    botUser.Username,
