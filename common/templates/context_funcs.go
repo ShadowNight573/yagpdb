@@ -40,7 +40,7 @@ func (c *Context) buildDM(gName string, s ...interface{}) *discordgo.MessageSend
 	}
 
 	if !bot.IsSpecialGuild(c.GS.Guild.ID) {
-		info := fmt.Sprintf("DM from server %s", gName)
+		info := fmt.Sprintf("DM from server: %s", gName)
 		if msgSend.Embed != nil {
 			msgSend.Embed.Footer = &discordgo.MessageEmbedFooter{
 				Text: info,
