@@ -7,7 +7,6 @@ import (
 	"github.com/jonas747/yagpdb/commands"
 	"github.com/jonas747/yagpdb/common"
 	"github.com/jonas747/discordgo"
-	"github.com/jonas747/yagpdb/bot"
 )
 
 var Command = &commands.YAGCommand{
