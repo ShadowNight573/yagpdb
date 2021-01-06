@@ -18,7 +18,7 @@ var Command = &commands.YAGCommand{
 		{Switch: "content", Name: "message to send", Type: dcmd.String, Default: ""},
 	},
 	RunFunc: util.RequireOwner(func(data *dcmd.Data) (interface{}, error) {
-		MSG := data.Switches("content") || "Uh"
+		MSG := "Uh"
 		return MSG, nil
 	}),
 }
