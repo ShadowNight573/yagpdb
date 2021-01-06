@@ -665,6 +665,14 @@ func (s Slice) Del(index int) (string, error) {
 	s = s[:len(s)-1]
 	return "", nil
 }
+	
+func (s Slice) FilterOut(index int) (Slice, error) {
+ 	if index < 0 || index >= len(s) {
+ 		return nil, errors.New("Index out of bounds")
+ 	}
+ 	
+ 	return append(s[:index], s[index+1:]...), nil
+}
 
 func (s Slice) AppendSlice(slice interface{}) (interface{}, error) {
 	val := reflect.ValueOf(slice)
