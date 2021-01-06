@@ -21,7 +21,7 @@ var Command = &commands.YAGCommand{
 				Name:    botUser.Username,
 				IconURL: discordgo.EndpointUserAvatar(botUser.ID, botUser.Avatar),
 			},
-			Description: fmt.Sprintf("This bot is a self hosted version of the bot YAGPDB which stands for Yet Another General Purpose Discord Bot. For more info please visit the yagpdb [website](https://yagpdb.xyz/) or [documentation](https://docs.yagpdb.xyz/).\n\nThis bot is hosted and updated by ShADowNIGHT#9025. You can find the control panel [here](https://%s/manage).", common.ConfHost.GetString()),
+			Description: fmt.Sprintf("This bot is a self hosted version of the bot YAGPDB which stands for Yet Another General Purpose Discord Bot. For more info please visit the YAGPDB [website](https://yagpdb.xyz/) or [documentation](https://docs.yagpdb.xyz/).\n\nThis bot is hosted and updated by ShADowNIGHT#9025. You can find the control panel [here](https://%s/manage).", common.ConfHost.GetString()),
 		}
 		return msg, nil
 	},
