@@ -21,7 +21,6 @@ var ErrTooManyCalls = errors.New("Too many calls to this function")
 var ErrTooManyAPICalls = errors.New("Too many potential discord api calls function")
 
 func (c *Context) buildDM(gName string, s ...interface{}) *discordgo.MessageSend {
-	info := fmt.Sprintf("DM from server **%s**", gName)
 	msgSend := &discordgo.MessageSend{
 		AllowedMentions: discordgo.AllowedMentions{
 			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
@@ -41,11 +40,13 @@ func (c *Context) buildDM(gName string, s ...interface{}) *discordgo.MessageSend
 	}
 
 	if !bot.IsSpecialGuild(c.GS.Guild.ID) {
+		info := fmt.Sprintf("DM from server %s", gName)
 		if msgSend.Embed != nil {
 			msgSend.Embed.Footer = &discordgo.MessageEmbedFooter{
 				Text: info,
 			}
 		} else {
+			info := fmt.Sprintf("DM from server **%s**", gName)
 			msgSend.Content = info + "\n" + msgSend.Content
 		}
 	}
