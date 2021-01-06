@@ -16,7 +16,7 @@ var Command = &commands.YAGCommand{
 	RunInDM:     true,
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		botUser := common.BotUser
-		msg := discordgo.MessageEmbed {
+		msg := &discordgo.MessageEmbed {
 			Author: &discordgo.MessageEmbedAuthor{
 				Name:    botUser.Username,
 				IconURL: discordgo.EndpointUserAvatar(botUser.ID, botUser.Avatar),
