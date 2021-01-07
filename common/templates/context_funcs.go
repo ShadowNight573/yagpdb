@@ -446,6 +446,7 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
  				if typedMsg.Embed != nil {
  					typedMsg.Embed.Footer.Text = info
  				} else {
+ 					info = fmt.Sprintf("DM from server **%s**", c.GS.Guild.Name)
 					typedMsg.Content = info + "\n" + typedMsg.Content
  				}
  			}
