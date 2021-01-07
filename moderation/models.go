@@ -59,6 +59,7 @@ type Config struct {
 	ErrorChannel  string `valid:"channel,true"`
 	LogUnbans     bool
 	LogBans       bool
+	LogKicks      bool
 
 	GiveRoleCmdEnabled bool
 	GiveRoleCmdModlog  bool

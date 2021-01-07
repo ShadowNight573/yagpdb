@@ -328,6 +328,11 @@ func checkAuditLogMemberRemoved(config *Config, data *discordgo.GuildMemberRemov
 		// Bot performed the kick, don't make duplicate modlog entries
 		return
 	}
+	
+	if !config.LogKicks {
+ 		// User doesn't want us to log kicks not made through yag
+ 		return
+ 	}
 
 	err := CreateModlogEmbed(config, author, MAKick, data.User, entry.Reason, "")
 	if err != nil {
