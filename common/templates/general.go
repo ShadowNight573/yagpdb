@@ -1036,6 +1036,49 @@ func tmplCurrentTime() time.Time {
 	return time.Now().UTC()
 }
 
+func tmplParseTime(layouts interface{}, value string, optionalArgs ...string) (time.Time, error) {
+ 	loc := time.UTC
+
+ 	var err error
+ 	if len(optionalArgs) >= 1 {
+ 		loc, err = time.LoadLocation(optionalArgs[0])
+ 		if err != nil {
+ 			return time.Time{}, err
+ 		}
+ 	}
+
+ 	var parsed time.Time
+ 	val := reflect.ValueOf(layouts)
+ 	switch val.Kind() {
+ 	case reflect.Slice, reflect.Array:
+ 		for i := 0; i < val.Len(); i++ {
+ 			switch layout := val.Index(i).Interface().(type) {
+ 			case string:
+ 				parsed, err = time.ParseInLocation(layout, value, loc)
+ 				if err != nil {
+ 					// Error recovery is essentially impossible in CC, so throwing an error on invalid input would be useless
+ 					continue
+ 				}
+
+ 				return parsed, nil
+ 			default:
+ 				return time.Time{}, errors.New("can't parse time with non-string layout")
+ 			}
+ 		}
+ 		return time.Time{}, nil
+ 	case reflect.String:
+ 		parsed, err = time.ParseInLocation(val.Interface().(string), value, loc)
+ 		if err != nil {
+ 			return time.Time{}, nil
+ 		}
+
+ 		return parsed, nil
+ 	default:
+ 		return time.Time{}, errors.New("argument passed to parseTime() was neither a string slice nor a string")
+ 	}
+ }
+
+
 func tmplNewDate(year, monthInt, day, hour, min, sec int, location ...string) (time.Time, error) {
 	loc := time.UTC
 	month := time.Month(monthInt)
