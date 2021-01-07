@@ -398,7 +398,9 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 	}
 
 	isDM := c.CurrentFrame.CS.Type == discordgo.ChannelTypeDM
+	c.GS.RLock()
  	info := fmt.Sprintf("DM from server: %s", c.GS.Guild.Name)
+ 	c.GS.RUnlock()
  	WL := bot.IsSpecialGuild(c.GS.ID)
  	
  	for _, v := range c.CurrentFrame.EmbedsToSend {

@@ -412,9 +412,11 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 		if cid == 0 {
 			return ""
 		}
-		isDM := cid != c.ChannelArgNoDM(channel)
 
+		isDM := cid != c.ChannelArgNoDM(channel)
+ 		c.GS.RLock()
  		info := fmt.Sprintf("DM from server: %s", c.GS.Guild.Name)
+ 		c.GS.RUnkock()
  		WL := bot.IsSpecialGuild(c.GS.ID)
 		
 		var m *discordgo.Message
@@ -443,6 +445,8 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 			if isDM && !WL {
  				if typedMsg.Embed != nil {
  					typedMsg.Embed.Footer.Text = info
+ 				} else {
+					typedMsg.Content = info + "\n" + typedMsg.Content
  				}
  			}
 		default:
