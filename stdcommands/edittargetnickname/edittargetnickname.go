@@ -5,6 +5,7 @@ import (
     "strings"
 
     "github.com/jonas747/dcmd"
+    "github.com/jonas747/discordgo"
     "github.com/jonas747/yagpdb/bot"
     "github.com/jonas747/yagpdb/commands"
     "github.com/jonas747/yagpdb/common"
@@ -23,7 +24,13 @@ var Command = &commands.YAGCommand{
     RunFunc: func(data *dcmd.Data) (interface{}, error) {
         if bot.IsSpecialGuild(data.GS.ID) {
             ms, err := bot.GetMember(data.GS.ID, data.Args[0].Int64())
-        
+            
+            if ok, err := bot.AdminOrPermMS(data.CS.ID, data.MS, discordgo.PermissionManageNicknames); err != nil {
+                return "Failed checking permissions.", err
+            } else if !ok {
+                return "You need manage nicknames permission to use this command", nil
+            }
+            
             if err != nil {
                 return "Member not found.", nil
             }
