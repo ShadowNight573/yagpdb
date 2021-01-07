@@ -22,7 +22,6 @@ var Command = &commands.YAGCommand{
 		if data.Args[0].Value != nil {
 			MSG = data.Args[0].Value.String()
 		}
-		$delTrigger := data.Switch("del").Value != nil && data.Switch("del").Value.(bool)
 		return MSG, nil
 	}),
 }
