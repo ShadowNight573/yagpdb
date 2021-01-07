@@ -559,6 +559,7 @@ func baseContextFuncs(c *Context) {
 	c.ContextFuncs["onlineCountBots"] = c.tmplOnlineCountBots
 	c.ContextFuncs["editNickname"] = c.tmplEditNickname
 	
+	c.ContextFuncs["standardize"] = c.tmplStandardize
 	c.ContextFuncs["execTemplate"] = c.tmplExecTemplate
  	c.ContextFuncs["addReturn"] = c.tmplAddReturn
 }
@@ -616,7 +617,16 @@ func (d Dict) Set(key interface{}, value interface{}) string {
 }
 
 func (d Dict) Get(key interface{}) interface{} {
-	return d[key]
+	out := d[key]
+ 	if out == nil {
+ 		switch key.(type) {
+ 		case int:
+ 			out = d[ToInt64(key)]
+ 		case int64:
+ 			out = d[tmplToInt(key)]
+ 		}
+ 	}
+ 	return out
 }
 
 func (d Dict) Del(key interface{}) string {
