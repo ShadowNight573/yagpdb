@@ -150,7 +150,7 @@ type contextFrame struct {
 	DelResponse bool
 
 	DelResponseDelay         int
-	EmebdsToSend             []*discordgo.MessageEmbed
+	EmbedsToSend             []*discordgo.MessageEmbed
 	AddResponseReactionNames []string
 
 	isNestedTemplate bool
@@ -396,7 +396,14 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 		}
 	}
 
-	for _, v := range c.CurrentFrame.EmebdsToSend {
+	isDM := c.CurrentFrame.CS.Type == discordgo.ChannelTypeDM
+ 	info := fmt.Sprintf("DM from server: %s", c.GS.Guild.Name)
+ 	WL := bot.IsSpecialGuild(c.GS.ID)
+ 	
+ 	for _, v := range c.CurrentFrame.EmbedsToSend {
+ 		if isDM && !WL {
+ 			v.Footer.Text = info
+ 		}
 		common.BotSession.ChannelMessageSendEmbed(channelID, v)
 	}
 
@@ -404,7 +411,12 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 		// no point in sending the response if it gets deleted immedietely
 		return nil, nil
 	}
-
+	
+	info = fmt.Sprintf("DM from server **%s**\n\n", c.GS.Guild.Name)
+	if isDM && !WL {
+ 		content = info + content
+ 	}
+	
 	m, err := common.BotSession.ChannelMessageSendComplex(channelID, c.MessageSend(content))
 	if err != nil {
 		logger.WithError(err).Error("Failed sending message")

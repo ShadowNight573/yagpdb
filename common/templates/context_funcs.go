@@ -412,7 +412,11 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 		if cid == 0 {
 			return ""
 		}
+		isDM := cid != c.ChannelArgNoDM(channel)
 
+ 		info := fmt.Sprintf("DM from server: %s", c.GS.Guild.Name)
+ 		WL := bot.IsSpecialGuild(c.GS.ID)
+		
 		var m *discordgo.Message
 		msgSend := &discordgo.MessageSend{
 			AllowedMentions: discordgo.AllowedMentions{
@@ -424,14 +428,30 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 		switch typedMsg := msg.(type) {
 
 		case *discordgo.MessageEmbed:
+			if isDM && !WL {
+ 				typedMsg.Footer = &discordgo.MessageEmbedFooter{
+ 					Text: info,
+ 				}
+ 			}
 			msgSend.Embed = typedMsg
 		case *discordgo.MessageSend:
 			msgSend = typedMsg
-			msgSend.AllowedMentions = discordgo.AllowedMentions{
-				Parse: parseMentions,
+			if !filterSpecialMentions {
+				msgSend.AllowedMentions = discordgo.AllowedMentions{Parse: parseMentions}
 			}
+			
+			if isDM && !WL {
+ 				if typedMsg.Embed != nil {
+ 					typedMsg.Embed.Footer.Text = info
+ 				}
+ 			}
 		default:
-			msgSend.Content = fmt.Sprint(msg)
+			if isDM && !WL {
+				info = fmt.Sprintf("DM from server **%s**", c.GS.Guild.Name)
+ 				msgSend.Content = info + "\n" + fmt.Sprint(msg)
+ 			} else {
+ 				msgSend.Content = fmt.Sprint(msg)
+ 			}
 		}
 
 		m, err = common.BotSession.ChannelMessageSendComplex(cid, msgSend)
