@@ -20,7 +20,7 @@ var Command = &commands.YAGCommand{
 	RunFunc: util.RequireOwner(func(data *dcmd.Data) (interface{}, error) {
 		MSG := "Provide a message when..."
 		if data.Args[0].Value != nil {
-			MSG = data.Args[0].Value
+			MSG = data.Args[0].Value.Str()
 		}
 		return MSG, nil
 	}),
