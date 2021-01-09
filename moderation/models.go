@@ -52,14 +52,15 @@ type Config struct {
 	WarnMessage            string `valid:"template,5000"`
 
 	// Misc
-	CleanEnabled  bool
-	ReportEnabled bool
-	ActionChannel string `valid:"channel,true"`
-	ReportChannel string `valid:"channel,true"`
-	ErrorChannel  string `valid:"channel,true"`
-	LogUnbans     bool
-	LogBans       bool
-	LogKicks      bool
+	CleanEnabled           bool
+	ReportEnabled          bool
+	ActionChannel          string `valid:"channel,true"`
+	ReportChannel          string `valid:"channel,true"`
+	ErrorChannel           string `valid:"channel,true"`
+	LogUnbans              bool
+	LogBans                bool
+	LogKicks               bool
+	SlowmodeCommandEnabled bool
 
 	GiveRoleCmdEnabled bool
 	GiveRoleCmdModlog  bool
