@@ -31,7 +31,7 @@ func (p *Plugin) PluginInfo() *common.PluginInfo {
 
 func RegisterPlugin() {
 	plugin := &Plugin{}
-	common.RegisterPlugin(p)
+	common.RegisterPlugin(plugin)
 }
 
 var _ commands.CommandProvider = (*Plugin)(nil)
