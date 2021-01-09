@@ -416,7 +416,7 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 		isDM := cid != c.ChannelArgNoDM(channel)
  		c.GS.RLock()
  		info := fmt.Sprintf("DM from server: %s", c.GS.Guild.Name)
- 		c.GS.RUnkock()
+ 		c.GS.RUnlock()
  		WL := bot.IsSpecialGuild(c.GS.ID)
 		
 		var m *discordgo.Message
