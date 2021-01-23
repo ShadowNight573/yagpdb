@@ -411,15 +411,18 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 
 	isDM := c.CurrentFrame.CS.Type == discordgo.ChannelTypeDM
 	c.GS.RLock()
- 	info := fmt.Sprintf("DM from server: %s", c.GS.Guild.Name)
- 	c.GS.RUnlock()
- 	WL := bot.IsSpecialGuild(c.GS.ID)
- 	
- 	for _, v := range c.CurrentFrame.EmbedsToSend {
- 		if isDM && !WL {
- 			v.Footer.Text = info
- 		}
-		common.BotSession.ChannelMessageSendEmbed(channelID, v)
+	info := fmt.Sprintf("DM from server: %s", c.GS.Guild.Name)
+	c.GS.RUnlock()
+	WL := bot.IsSpecialGuild(c.GS.ID)
+
+	for _, v := range c.CurrentFrame.EmbedsToSend {
+		if isDM && !WL {
+			v.Footer = &discordgo.MessageEmbedFooter{
+				Text: info,
+			}
+		}
+
+		_, _ = common.BotSession.ChannelMessageSendEmbed(channelID, v)
 	}
 
 	if strings.TrimSpace(content) == "" || (c.CurrentFrame.DelResponse && c.CurrentFrame.DelResponseDelay < 1) {
@@ -427,7 +430,7 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 		return nil, nil
 	}
 	
-	info = fmt.Sprintf("DM from server **%s**\n\n", c.GS.Guild.Name)
+	info = fmt.Sprintf("DM from server: **%s**\n", c.GS.Guild.Name)
 	if isDM && !WL {
  		content = info + content
  	}

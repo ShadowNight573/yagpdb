@@ -46,7 +46,7 @@ func (c *Context) buildDM(gName string, s ...interface{}) *discordgo.MessageSend
 				Text: info,
 			}
 		} else {
-			info := fmt.Sprintf("DM from server **%s**", gName)
+			info := fmt.Sprintf("DM from server: **%s**", gName)
 			msgSend.Content = info + "\n" + msgSend.Content
 		}
 	}
@@ -443,10 +443,12 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 			}
 			
 			if isDM && !WL {
- 				if typedMsg.Embed != nil {
- 					typedMsg.Embed.Footer.Text = info
- 				} else {
- 					info = fmt.Sprintf("DM from server **%s**", c.GS.Guild.Name)
+				if typedMsg.Embed != nil {
+					typedMsg.Embed.Footer = &discordgo.MessageEmbedFooter{
+						Text: info,
+					}
+				} else {
+					info = fmt.Sprintf("DM from server **%s**", c.GS.Guild.Name)
 					typedMsg.Content = info + "\n" + typedMsg.Content
  				}
  			}
