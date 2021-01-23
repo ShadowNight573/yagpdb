@@ -754,8 +754,8 @@ func (s Slice) Set(index int, item interface{}) (string, error) {
 		return "", errors.New("Index out of bounds")
 	}
 	if err := detectCyclicValue(reflect.ValueOf(s)); err != nil {
-+		return "", err
-+	}
+		return "", err
+	}
 	s[index] = item
 	return "", nil
 }
