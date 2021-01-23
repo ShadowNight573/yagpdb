@@ -298,12 +298,12 @@ func (c *Context) executeParsed() (r string, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			actual, ok := r.(error)
-+			if !ok {
-+				actual = nil
-+			}
-+
-+			logger.WithField("guild", c.GS.ID).WithError(actual).Error("Panicked executing template: " + c.Name)
-+			err = errors.New("bot unexpectedly panicked")
+			if !ok {
+				actual = nil
+			}
+
+			logger.WithField("guild", c.GS.ID).WithError(actual).Error("Panicked executing template: " + c.Name)
+			err = errors.New("bot unexpectedly panicked")
 		}
 	}()
 
