@@ -562,38 +562,38 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("targetHasRoleID", c.tmplTargetHasRoleID)
 	c.addContextFunc("targetHasRoleName", c.tmplTargetHasRoleName)
 
-	c.addContextFunc("deleteResponse", c.tmplDelResponse
-	c.addContextFunc("deleteTrigger", c.tmplDelTrigger
-	c.addContextFunc("deleteMessage", c.tmplDelMessage
-	c.addContextFunc("deleteMessageReaction", c.tmplDelMessageReaction
-	c.addContextFunc("deleteAllMessageReactions", c.tmplDelAllMessageReactions
-	c.addContextFunc("getMessage", c.tmplGetMessage
-	c.addContextFunc("getMember", c.tmplGetMember
-	c.addContextFunc("getChannel", c.tmplGetChannel
-	c.addContextFunc("getRole", c.tmplGetRole
-	c.addContextFunc("addReactions", c.tmplAddReactions
-	c.addContextFunc("addResponseReactions", c.tmplAddResponseReactions
-	c.addContextFunc("addMessageReactions", c.tmplAddMessageReactions
+	c.addContextFunc("deleteResponse", c.tmplDelResponse)
+	c.addContextFunc("deleteTrigger", c.tmplDelTrigger)
+	c.addContextFunc("deleteMessage", c.tmplDelMessage)
+	c.addContextFunc("deleteMessageReaction", c.tmplDelMessageReaction)
+	c.addContextFunc("deleteAllMessageReactions", c.tmplDelAllMessageReactions)
+	c.addContextFunc("getMessage", c.tmplGetMessage)
+	c.addContextFunc("getMember", c.tmplGetMember)
+	c.addContextFunc("getChannel", c.tmplGetChannel)
+	c.addContextFunc("getRole", c.tmplGetRole)
+	c.addContextFunc("addReactions", c.tmplAddReactions)
+	c.addContextFunc("addResponseReactions", c.tmplAddResponseReactions)
+	c.addContextFunc("addMessageReactions", c.tmplAddMessageReactions)
 
-	c.addContextFunc("currentUserCreated", c.tmplCurrentUserCreated
-	c.addContextFunc("currentUserAgeHuman", c.tmplCurrentUserAgeHuman
-	c.addContextFunc("currentUserAgeMinutes", c.tmplCurrentUserAgeMinutes
-	c.addContextFunc("sleep", c.tmplSleep
-	c.addContextFunc("reFind", c.reFind
-	c.addContextFunc("reFindAll", c.reFindAll
-	c.addContextFunc("reFindAllSubmatches", c.reFindAllSubmatches
-	c.addContextFunc("reReplace", c.reReplace
-	c.addContextFunc("reSplit", c.reSplit
+	c.addContextFunc("currentUserCreated", c.tmplCurrentUserCreated)
+	c.addContextFunc("currentUserAgeHuman", c.tmplCurrentUserAgeHuman)
+	c.addContextFunc("currentUserAgeMinutes", c.tmplCurrentUserAgeMinutes)
+	c.addContextFunc("sleep", c.tmplSleep)
+	c.addContextFunc("reFind", c.reFind)
+	c.addContextFunc("reFindAll", c.reFindAll)
+	c.addContextFunc("reFindAllSubmatches", c.reFindAllSubmatches)
+	c.addContextFunc("reReplace", c.reReplace)
+	c.addContextFunc("reSplit", c.reSplit)
 
-	c.addContextFunc("editChannelTopic", c.tmplEditChannelTopic
-	c.addContextFunc("editChannelName", c.tmplEditChannelName
-	c.addContextFunc("onlineCount", c.tmplOnlineCount
-	c.addContextFunc("onlineCountBots", c.tmplOnlineCountBots
-	c.addContextFunc("editNickname", c.tmplEditNickname
+	c.addContextFunc("editChannelTopic", c.tmplEditChannelTopic)
+	c.addContextFunc("editChannelName", c.tmplEditChannelName)
+	c.addContextFunc("onlineCount", c.tmplOnlineCount)
+	c.addContextFunc("onlineCountBots", c.tmplOnlineCountBots)
+	c.addContextFunc("editNickname", c.tmplEditNickname)
 	
-	c.addContextFunc("standardize", c.tmplStandardize
-	c.addContextFunc("execTemplate", c.tmplExecTemplate
- 	c.addContextFunc("addReturn", c.tmplAddReturn
+	c.addContextFunc("standardize", c.tmplStandardize)
+	c.addContextFunc("execTemplate", c.tmplExecTemplate)
+ 	c.addContextFunc("addReturn", c.tmplAddReturn)
 }
 
 type limitedWriter struct {
