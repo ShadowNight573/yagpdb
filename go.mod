@@ -3,7 +3,6 @@ module github.com/jonas747/yagpdb
 go 1.13
 
 replace github.com/jonas747/discordgo => github.com/ShadowNight573/discordgo 97168cc911b336a6d4b693fdc17f2585f106bd79
-replace github.com/jonas747/template => github.com/Pedro-Pessoa/template v1.1.4-2
 require (
 	emperror.dev/errors v0.4.3
 	github.com/AYLIEN/aylien_textapi_go v0.6.0
