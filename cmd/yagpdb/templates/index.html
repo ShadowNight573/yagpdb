@@ -17,10 +17,10 @@
 <meta name="msapplication-config" content="/static/icons/browserconfig.xml?v=6">
 <meta name="theme-color" content="#ffffff">
 
-  <meta property="og:title" content="YAGPDB" />
-  <meta property="og:description" content="Yet Another General Purpose Discord Bot" />
+  <meta property="og:title" content="ASGPDB" />
+  <meta property="og:description" content="Another Shady General Purpose Discord Bot" />
   <!-- For Social Media -->
-  <meta property="description" content="Yet Another General Purpose Discord Bot" />
+  <meta property="description" content="Another Shady General Purpose Discord Bot" />
   <!-- For search engines -->
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4"
@@ -29,7 +29,7 @@
   <link rel="stylesheet" href="/static/css/landing-page-min.css">
   <!-- Custom Fonts -->
   <link href="https://fonts.googleapis.com/css?family=Lato:300,400,500,700|Poppins:500,700" rel="stylesheet">
-  <title>YAGPDB</title>
+  <title>ASGPDB</title>
 </head>
 
 <body>
@@ -46,9 +46,6 @@
       <ul class="navbar-nav mr-auto">
         <li class="nav-item active">
           <a id="link_to_about" class="nav-link js-anchor-link" href="#about">About</a>
-        </li>
-        <li class="nav-item active">
-          <a class="nav-link js-anchor-link" href="#features">Features</a>
         </li>
         <li class="nav-item active">
           <a class="nav-link" href="/status">Status</a>
@@ -78,8 +75,8 @@
           <div class="row justify-content-md-center">
             <div class="col col-md-10">
               <h1 class="brand-heading bold intro_head">
-                <br/>YAGPDB</h1>
-              <p class="intro_headline">Yet Another General Purpose Discord Bot</p>
+                <br/>ASGPDB</h1>
+              <p class="intro_headline">Another Shady General Purpose Discord Bot</p>
             </div>
           </div>
           {{if ne .DemoServerID "0"}}<div class="row justify-content-md-center">
@@ -113,134 +110,16 @@
   <div class="about">
     <section class="container content-section text-center">
       <a id="about"></a>
-      <img class="img-responsive about aboutlogo" src="/static/img/logo_y.png" alt="logo of yagpdb">
+      <img class="img-responsive about aboutlogo" src="https://yagpdb.xyz/static/img/logo_y.png" alt="logo of yagpdb">
       <div class="row justify-content-md-center">
         <div class="col col-lg-8 abouttext" style="padding-bottom: 3%;">
           <h2 class="about poppins semibold">About YAGPDB</h2>
-          <p class="about">YAGPDB is a multi-purpose Discord bot that I've worked on for quite some time now. What does it do? Well, it does
-            a bunch of stuff right now, the best way to figure out what it does is to try it out by adding it onto a testing
-            server and see what it provides for yourself.</p>
-          <p class="about">
-            <b>Who am I?</b> I go by the name Jonas747 online and (unsurprisingly) my real name is also Jonas, although not 747,
-            I'm not a plane. YAGPDB is a project that I have been developing in my spare time for roughly 3 years now, it
-            started out because MEE6 (which I was currently using for my server) was lacking a lot of stuff that I wanted,
-            so I decided to make my own bot, and here I am.</p>
+          <p class="about">This is a self hosted version of the bot YAGPDB. Which stands for Yet Another General Purpose Discord Bot. You can find all the info you want about YAGPDB on the<a href="https://yagpdb.xyz/" target="_blank" rel="noopener" class="link"> official YAGPDB page</a>
+          </p>
         </div>
       </div>
     </section>
   </div>
-  <!-- Features -->
-  <div class="blank">
-    <a id="features"></a>
-    <section id="features_desktop" class="o_container content-section features">
-      <div class="row justify-content-md-center">
-        <div class="col col-lg-12">
-          <h2 class="feature_title semibold">
-            <b>FEATURES</b>
-          </h2>
-        </div>
-      </div>
-      <div id="reddit_feed" class="feature_element_l">
-        <div class="text-left redbox first">
-          <h3>Feeds</h3>
-          <ul>
-            <li>Fast Reddit feeds (within one minute)</li>
-            <li>Fast YouTube feeds (within a few minutes)</li>
-            <li>Join / Leave messages in a specific channel (configurable)</li>
-            <li>Direct messages on join (configurable)</li>
-          </ul>
-        </div>
-        <img src="/static/img/reddit feed1.png" class="img-fluid f_image_r second" alt="Example of Reddit Feed from r/discordapp">
-        <img src="/static/img/line1.png" class="img-fluid line_image line1" alt="line">
-      </div>
-      <div id="rolemenu" class="feature_element_r">
-        <img src="/static/img/rolemenu1.png" class="img-fluid f_image_l second" alt="Role Menu with reactions">
-        <div class="redbox text_right first">
-          <h3>Self-assignable Roles</h3>
-          <p>This feature is very advanced. You can either give yourself a role with a command or with a role menu:</p>
-          <ul>
-            <li>Group in several groups for multiple menus</li>
-            <li>Assign the roles via reactions on a message (role menu)</li>
-            <li>Different modes like single or multiple roles at once</li>
-            <li>Advanced options like require role or ignore role per group or role</li>
-          </ul>
-        </div>
-        <img src="/static/img/line4.png" class="img-fluid line_image line2" alt="line">
-      </div>
-      <div id="automod" class="feature_element_l">
-        <div class="text-left redbox first">
-          <h3>Automatic Moderator</h3>
-          <p>YAGPDB has a very configurable automoderator, for each rule you can set automoderator to mute, kick or ban after
-            a certain number of violations within a certain timeframe.</p>
-          <p>
-            <b>
-              <a href="https://docs.yagpdb.xyz/tools-and-utilities/automoderator-v2" target="_blank" rel="noopener" class="link">Click here for a list of rules, conditions, and effects</a>
-            </b>
-          </p>
-        </div>
-        <img src="/static/img/automod1.png" class="img-fluid f_image_r second" alt="Auto Moderator in action">
-        <img src="/static/img/line1.png" class="img-fluid line_image line3" alt="line">
-      </div>
-      <div id="customcommands" class="feature_element_r">
-        <img src="/static/img/custom commands1.png" class="img-fluid f_image_l second" alt="Custom Command example with invite">
-        <div class="redbox text_right first">
-          <h3>Custom Commands</h3>
-          <ul>
-            <li>Triggers: Starts with, Contains, Exact match or Regex</li>
-            <li>Dynamic response</li>
-            <li>Useful for automatic responses to questions, command aliases or other fun stuff</li>
-          </ul>
-          <p>
-            <b>
-              <a href="https://docs.yagpdb.xyz/other-1/custom-command-examples" target="_blank" rel="noopener" class="link">Click here for custom command examples</a>
-            </b>
-          </p>
-        </div>
-        <img src="/static/img/line4.png" class="img-fluid line_image line4" alt="line">
-      </div>
-      <div id="serverstats" class="feature_element_l">
-        <div class="text-left redbox first">
-          <h3>Server Stats (
-            <a href="http://yagpdb.xyz/public/140847179043569664/stats" target="_blank" rel="noopener" class="link">Example</a>)</h3>
-          <ul>
-            <li>Stats: Members joined / left, messages in the last 24h per channel, members online</li>
-            <li>Optionally make stats public</li>
-            <li>Graphs with message overview on the control panel</li>
-          </ul>
-        </div>
-        <img src="/static/img/stats1.png" class="img-fluid f_image_r second" alt="Example of the status command">
-        <img src="/static/img/line5.png" class="img-fluid line_image line5" alt="line">
-      </div>
-      <div id="general_moderation" class="feature_element_r">
-        <img src="/static/img/moderation1.png" class="img-fluid f_image_l second" alt="Example of Moderation with YAGPDB">
-        <div class="redbox text_right first">
-          <h3>General Moderation</h3>
-          <ul>
-            <li>Kick, Ban and Clean</li>
-            <li>Advanced cleaning parameters</li>
-            <li>Timed mutes and bans</li>
-            <li>Modlog with kicks, bans, mutes and warnings</li>
-            <li>Message to the person being warned / kicked / muted / banned</li>
-            <li>Message logs</li>
-            <li>Warnings</li>
-          </ul>
-        </div>
-      </div>
-      <div class="row feature_item">
-        <div class="col-lg-12">
-          <h2 class="centered big_margin">And finally, the feature I'm most proud of:</h2>
-        </div>
-      </div>
-      <div id="catfacts" class="feature_element_r">
-        <img src="/static/img/cat fact1.png" class="img-fluid f_image_l second" alt="A random cat fact">
-        <div class="redbox text_right first">
-          <h3>Cat Facts</h3>
-          <p>This feature made me spend days and nights sitting in a horrible chair in a basement staring at an old monitor
-            fetching new facts. It includes
-            <b>over 250</b> different cat facts!</p>
-        </div>
-      </div>
-    </section>
     <!-- Questions and short FAQ -->
     <div class="questions">
       <section id="other" class="container content-section ">
@@ -254,9 +133,6 @@
               <li>The YAGPDB Community Server for support, suggestions, feedback and general talk can be joined
                 <a class="link" href="https://discord.gg/4udtcA5">here</a>
               </li>
-              <li>If you want to donate using Patreon or cryptocurrencies, check out
-                <a class="link" href="https://docs.yagpdb.xyz/donating">this page</a>
-              </li>
             </ul>
           </div>
         </div>
@@ -268,8 +144,7 @@
         <div class="col col-lg-12">
           <p>
             <b>YAGPDB</b> created by
-            <a class="link" href="https://github.com/jonas747" rel="noopener" target="_blank">Jonas747</a> | Landing Page by
-            <a class="link" href="https://github.com/michelhn/" rel="noopener" target="_blank">Michdi</a>
+            <a class="link" href="https://github.com/jonas747" rel="noopener" target="_blank">Jonas747</a>
           </p>
         </div>
       </div>

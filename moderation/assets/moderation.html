@@ -123,6 +123,13 @@ the punishment{{end}}
         </div>
         <hr />
 
+        <div class="form-group">
+             <label>Channel to send error messages of the moderation DMs</label>
+             <select class="form-control" name="ErrorChannel" data-requireperms-embed>
+                 {{textChannelOptions .ActiveGuild.Channels .ModConfig.ErrorChannel true "None"}}
+             </select>
+         </div>
+         <hr />
         {{checkbox "ReportEnabled" "report-enabled" "Enable report command?" .ModConfig.ReportEnabled}}
         <p><code>(mention or prefix) report @user some reason</code><br />
             Everyone can use this.<br />
@@ -163,17 +170,31 @@ the punishment{{end}}
             Clean command can delete up to a 1000 messages back in history (max 100 messages at a time).<br />
             See <code>-help clean</code> for more advanced usage.
         </p>
-
+        
+        <hr />
+         {{checkbox "SlowmodeCommandEnabled" "slowmode-enabled" "Enable slowmode command?" .ModConfig.SlowmodeCommandEnabled}}
+         <p>
+             <code>(mention or prefix)slowmode 10 1h</code><br />
+             Manage Messages permission is required for this command.<br />
+             This command will set the slowmode of the channel it was triggered in. <br />
+             In this example the channel would be in a slowmode of 10s during a 1 hour period.<br />
+             The duration argument (the second one) is optional.
+         </p>
+        
         <hr />
         {{checkbox "LogBans" "log-bans" "Log ban events not made through the bot" .ModConfig.LogBans}}
         <p>For the author and reason to show up when this is used you need to give the bot "audit log" permissions.</p>
+        
+         <hr />
+         {{checkbox "LogKicks" "log-kicks" "Log kick events not made through the bot" .ModConfig.LogKicks}}
+         <p>For the author and reason to show up when this is used you need to give the bot "audit log" permissions.</p>
     </div>
 </div>
 {{end}}
 
 {{define "moderation_mute"}}
 <p>Muting users allows you to punish users by removing their ability to talk.</p>
-<p>How YAGPDB Mutes users is it gives them a role which has the "Send messages" permission removed on all channels</p>
+<p>How ASGPDB Mutes users is it gives them a role which has the "Send messages" permission removed on all channels</p>
 <p>The simplest way to use it is to have the bot manage the mute role (see below), but for more advanced usages you can
     blacklist channels and fully manage it on your own.</p>
 <div class="row">

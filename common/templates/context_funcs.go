@@ -20,45 +20,54 @@ import (
 var ErrTooManyCalls = errors.New("Too many calls to this function")
 var ErrTooManyAPICalls = errors.New("Too many potential discord api calls function")
 
+func (c *Context) buildDM(gName string, s ...interface{}) *discordgo.MessageSend {
+	msgSend := &discordgo.MessageSend{
+		AllowedMentions: discordgo.AllowedMentions{
+			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
+		},
+	}
+
+	switch t := s[0].(type) {
+	case *discordgo.MessageEmbed:
+		msgSend.Embed = t
+	case *discordgo.MessageSend:
+		msgSend = t
+		if (strings.TrimSpace(msgSend.Content) == "") && (msgSend.File == nil) {
+			return nil
+		}
+	default:
+		msgSend.Content = fmt.Sprintf("%s", fmt.Sprint(s...))
+	}
+
+	if !bot.IsSpecialGuild(c.GS.Guild.ID) {
+		info := fmt.Sprintf("DM from server: %s", gName)
+		if msgSend.Embed != nil {
+			msgSend.Embed.Footer = &discordgo.MessageEmbedFooter{
+				Text: info,
+			}
+		} else {
+			info := fmt.Sprintf("DM from server: **%s**", gName)
+			msgSend.Content = info + "\n" + msgSend.Content
+		}
+	}
+
+	return msgSend
+}
+
 func (c *Context) tmplSendDM(s ...interface{}) string {
-	if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 1) || c.MS == nil {
+	if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 3) || c.MS == nil {
 		return ""
 	}
 
 	c.GS.RLock()
-	gName := c.GS.Guild.Name
-	memberID := c.MS.ID
+	memberID, gName := c.MS.ID, c.GS.Guild.Name
 	c.GS.RUnlock()
-
-	info := fmt.Sprintf("Custom Command DM From the server **%s**", gName)
-	msgSend := &discordgo.MessageSend{
-			AllowedMentions: discordgo.AllowedMentions{
-					Parse : []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
-			},
-		}
 	
-	switch t:= s[0].(type) {		
-		case *discordgo.MessageEmbed:
-			t.Footer = &discordgo.MessageEmbedFooter{
-					Text: info,
-				    }
-			msgSend.Embed = t
-		case *discordgo.MessageSend:
-			msgSend = t
-			if msgSend.Embed != nil {
-				msgSend.Embed.Footer = &discordgo.MessageEmbedFooter{
-					Text: info,
-				    }
-				break
-			}
-			if (strings.TrimSpace(msgSend.Content) == "") && (msgSend.File == nil) {
-				return ""
-			}
-			msgSend.Content = info + "\n" + msgSend.Content
-		default:
-			msgSend.Content = fmt.Sprintf("%s\n%s", info, fmt.Sprint(s...))
+	msgSend := c.buildDM(gName, s...)
+	if msgSend == nil {
+		return ""
 	}
-	
+
 	channel, err := common.BotSession.UserChannelCreate(memberID)
 	if err != nil {
 		return ""
@@ -66,6 +75,38 @@ func (c *Context) tmplSendDM(s ...interface{}) string {
 	_, _ = common.BotSession.ChannelMessageSendComplex(channel.ID, msgSend)
 	return ""
 }
+
+func (c *Context) tmplSendTargetDM(target interface{}, s ...interface{}) string {
+	if bot.IsSpecialGuild(c.GS.ID) {
+		if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 3) {
+			return ""
+		}
+
+		targetID := targetUserID(target)
+		if targetID == 0 {
+			return ""
+		}
+
+		ts, err := bot.GetMember(c.GS.ID, targetID)
+		if err != nil {
+			return ""
+		}
+
+		msgSend := c.buildDM("", s...)
+		if msgSend == nil {
+			return ""
+		}
+
+		channel, err := common.BotSession.UserChannelCreate(ts.ID)
+		if err != nil {
+			return ""
+		}
+		_, _ = common.BotSession.ChannelMessageSendComplex(channel.ID, msgSend)
+	}
+
+	return ""
+}
+
 
 // ChannelArg converts a verity of types of argument into a channel, verifying that it exists
 func (c *Context) ChannelArg(v interface{}) int64 {
@@ -120,6 +161,8 @@ func (c *Context) ChannelArg(v interface{}) int64 {
 
 	return cid
 }
+
+
 
 // ChannelArgNoDM is the same as ChannelArg but will not accept DM channels
 func (c *Context) ChannelArgNoDM(v interface{}) int64 {
@@ -176,14 +219,18 @@ func (c *Context) ChannelArgNoDM(v interface{}) int64 {
 }
 
 func (c *Context) tmplSendTemplateDM(name string, data ...interface{}) (interface{}, error) {
-	return c.sendNestedTemplate(nil, true, name, data...)
+	return c.sendNestedTemplate(nil, true, false, name, data...)
 }
 
 func (c *Context) tmplSendTemplate(channel interface{}, name string, data ...interface{}) (interface{}, error) {
-	return c.sendNestedTemplate(channel, false, name, data...)
+	return c.sendNestedTemplate(channel, false, false, name, data...)
 }
 
-func (c *Context) sendNestedTemplate(channel interface{}, dm bool, name string, data ...interface{}) (interface{}, error) {
+func (c *Context) tmplExecTemplate(channel interface{}, name string, data ...interface{}) (interface{}, error) {
+ 	return c.sendNestedTemplate(channel, false, true, name, data...)
+ }
+
+func (c *Context) sendNestedTemplate(channel interface{}, dm , exec bool, name string, data ...interface{}) (interface{}, error) {
 	if c.IncreaseCheckCallCounter("exec_child", 3) {
 		return "", ErrTooManyCalls
 	}
@@ -245,7 +292,7 @@ func (c *Context) sendNestedTemplate(channel interface{}, dm bool, name string, 
 		// inherit
 		c.CurrentFrame.SendResponseInDM = oldFrame.SendResponseInDM
 	}
-
+	c.CurrentFrame.execMode = exec
 	// pass some data
 	if len(data) > 1 {
 		dict, _ := Dictionary(data...)
@@ -266,6 +313,13 @@ func (c *Context) sendNestedTemplate(channel interface{}, dm bool, name string, 
 	if err != nil {
 		return "", err
 	}
+	
+	if exec {
+ 		var execReturnStruct CtxExecReturn
+ 		execReturnStruct.Response = c.MessageSend(resp)
+ 		execReturnStruct.Return = c.CurrentFrame.execReturn
+ 		return execReturnStruct, err
+ 	}
 
 	m, err := c.SendResponse(resp)
 	if err != nil {
@@ -276,6 +330,19 @@ func (c *Context) sendNestedTemplate(channel interface{}, dm bool, name string, 
 		return m.ID, err
 	}
 	return "", err
+}
+
+func (c* Context) tmplAddReturn(data...interface{}) (interface{} ,error) {
+ 	if !c.CurrentFrame.isNestedTemplate || !c.CurrentFrame.execMode {
+ 		return "", errors.New("Can only be used in nested templates in exec mode.")
+ 	}
+
+ 	if len(c.CurrentFrame.execReturn) + len (data) > 10 {
+ 		return "", errors.New("Return length cannot exceed 10")
+ 	}
+
+ 	c.CurrentFrame.execReturn = append(c.CurrentFrame.execReturn, data...)
+ 	return "", nil
 }
 
 func (c *Context) checkSafeStringDictNoRecursion(d SDict, n int) bool {
@@ -346,6 +413,12 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 			return ""
 		}
 
+		isDM := cid != c.ChannelArgNoDM(channel)
+ 		c.GS.RLock()
+ 		info := fmt.Sprintf("DM from server: %s", c.GS.Guild.Name)
+ 		c.GS.RUnlock()
+ 		WL := bot.IsSpecialGuild(c.GS.ID)
+		
 		var m *discordgo.Message
 		msgSend := &discordgo.MessageSend{
 			AllowedMentions: discordgo.AllowedMentions{
@@ -357,14 +430,35 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 		switch typedMsg := msg.(type) {
 
 		case *discordgo.MessageEmbed:
+			if isDM && !WL {
+ 				typedMsg.Footer = &discordgo.MessageEmbedFooter{
+ 					Text: info,
+ 				}
+ 			}
 			msgSend.Embed = typedMsg
 		case *discordgo.MessageSend:
 			msgSend = typedMsg
-			msgSend.AllowedMentions = discordgo.AllowedMentions{
-				Parse: parseMentions,
+			if !filterSpecialMentions {
+				msgSend.AllowedMentions = discordgo.AllowedMentions{Parse: parseMentions}
 			}
+			
+			if isDM && !WL {
+				if typedMsg.Embed != nil {
+					typedMsg.Embed.Footer = &discordgo.MessageEmbedFooter{
+						Text: info,
+					}
+				} else {
+					info = fmt.Sprintf("DM from server **%s**", c.GS.Guild.Name)
+					typedMsg.Content = info + "\n" + typedMsg.Content
+ 				}
+ 			}
 		default:
-			msgSend.Content = fmt.Sprint(msg)
+			if isDM && !WL {
+				info = fmt.Sprintf("DM from server **%s**", c.GS.Guild.Name)
+ 				msgSend.Content = info + "\n" + fmt.Sprint(msg)
+ 			} else {
+ 				msgSend.Content = fmt.Sprint(msg)
+ 			}
 		}
 
 		m, err = common.BotSession.ChannelMessageSendComplex(cid, msgSend)
@@ -499,18 +593,13 @@ func (c *Context) tmplHasRoleName(name string) (bool, error) {
 		return false, ErrTooManyCalls
 	}
 
-	c.GS.RLock()
-	defer c.GS.RUnlock()
+	role := c.findRoleByName(name)
+	if role == nil {
+		return false, nil
+	}
 
-	for _, r := range c.GS.Guild.Roles {
-		if strings.EqualFold(r.Name, name) {
-			if common.ContainsInt64Slice(c.MS.Roles, r.ID) {
-				return true, nil
-			}
-
-			return false, nil
-
-		}
+	if common.ContainsInt64Slice(c.MS.Roles, role.ID) {
+		return true, nil
 	}
 
 	// Role not found, default to false
@@ -563,6 +652,51 @@ func (c *Context) tmplTargetHasRoleID(target interface{}, roleID interface{}) bo
 
 }
 
+	func (c *Context) tmplSetRoles(target interface{}, roleSlice interface{}) (string, error) {
+ 	if c.IncreaseCheckGenericAPICall() {
+ 		return "", ErrTooManyAPICalls
+ 	}
+
+ 	targetID := targetUserID(target)
+ 	if targetID == 0 {
+ 		return "", nil
+ 	}
+
+ 	if c.IncreaseCheckCallCounter("set_roles"+discordgo.StrID(targetID), 1) {
+ 		return "", errors.New("Too many calls to setRoles for specific user ID (max 1 / user)")
+ 	}
+
+ 	rSlice := reflect.ValueOf(roleSlice)
+ 	switch rSlice.Kind() {
+ 	case reflect.Slice, reflect.Array:
+ 		// ok
+ 	default:
+ 		return "", errors.New("Value passed was not an array or slice")
+ 	}
+
+ 	if rSlice.Len() > 250 {
+ 		return "", errors.New("Length of slice passed was > 250 (Discord role limit)")
+ 	}
+
+ 	roles := make([]string, 0, rSlice.Len())
+ 	for i := 0; i < rSlice.Len(); i++ {
+ 		switch v := rSlice.Index(i).Interface().(type) {
+ 		case string:
+ 			roles = append(roles, v)
+ 		case int, int64:
+ 			roles = append(roles, discordgo.StrID(reflect.ValueOf(v).Int()))
+ 		default:
+ 			return "", errors.New("Could not convert slice to string slice")
+ 		}
+ 	}
+
+ 	err := common.BotSession.GuildMemberEdit(c.GS.ID, targetID, roles)
+ 	if err != nil {
+ 		return "", err
+ 	}
+ 	return "", nil
+}
+
 func (c *Context) tmplTargetHasRoleName(target interface{}, name string) bool {
 	if c.IncreaseCheckStateLock() {
 		return false
@@ -578,28 +712,26 @@ func (c *Context) tmplTargetHasRoleName(target interface{}, name string) bool {
 		return false
 	}
 
-	c.GS.RLock()
-
-	for _, r := range c.GS.Guild.Roles {
-		if strings.EqualFold(r.Name, name) {
-			if common.ContainsInt64Slice(ts.Roles, r.ID) {
-				c.GS.RUnlock()
-				return true
-			}
-
-			c.GS.RUnlock()
-			return false
-		}
+	role := c.findRoleByName(name)
+	if role == nil {
+		return false
 	}
 
-	c.GS.RUnlock()
+	if common.ContainsInt64Slice(ts.Roles, role.ID) {			
+		return true
+	}
 	return false
 
 }
 
-func (c *Context) tmplGiveRoleID(target interface{}, roleID interface{}) string {
+func (c *Context) tmplGiveRoleID(target interface{}, roleID interface{}, optionalArgs ...interface{}) string {
 	if c.IncreaseCheckGenericAPICall() {
 		return ""
+	}
+
+	delay := 0
+	if len(optionalArgs) > 0 {
+		delay = tmplToInt(optionalArgs[0])
 	}
 
 	targetID := targetUserID(target)
@@ -612,25 +744,38 @@ func (c *Context) tmplGiveRoleID(target interface{}, roleID interface{}) string 
 		return ""
 	}
 
-	// Check to see if we can save a API request here
-	c.GS.RLock()
-	ms := c.GS.Member(false, targetID)
-	hasRole := false
-	if ms != nil {
-		hasRole = common.ContainsInt64Slice(ms.Roles, role)
-	}
-	c.GS.RUnlock()
+	// Check to see if we can save a API request here, if this isn't delayed
+	if delay <= 0 {
+		c.GS.RLock()
+		ms := c.GS.Member(false, targetID)
+		hasRole := true
+		if ms != nil && ms.MemberSet {
+			hasRole = common.ContainsInt64Slice(ms.Roles, role)
+		}
+		c.GS.RUnlock()
 
-	if !hasRole {
+		if !hasRole {
+			return ""
+		}
+	}
+
+	if delay > 0 {
+		scheduledevents2.ScheduleAddRole(context.Background(), c.GS.ID, targetID, role, time.Now().Add(time.Second*time.Duration(delay)))
+	} else {
 		common.BotSession.GuildMemberRoleAdd(c.GS.ID, targetID, role)
 	}
 
 	return ""
 }
 
-func (c *Context) tmplGiveRoleName(target interface{}, name string) string {
+func (c *Context) tmplGiveRoleName(target interface{}, name string, optionalArgs ...interface{}) string {
 	if c.IncreaseCheckGenericAPICall() {
 		return ""
+	}
+
+	delay := 0
+	if len(optionalArgs) > 0 {
+		delay = tmplToInt(optionalArgs[0])
 	}
 
 	targetID := targetUserID(target)
@@ -643,15 +788,21 @@ func (c *Context) tmplGiveRoleName(target interface{}, name string) string {
 		return "no role by the name of " + name + " found"
 	}
 
-	// Maybe save a api request
-	ms := c.GS.Member(false, targetID)
-	if ms != nil {
-		if common.ContainsInt64Slice(ms.Roles, role.ID) {
-			return ""
+	// Maybe save an api request
+	if delay <= 0 {
+		ms := c.GS.Member(false, targetID)
+		if ms != nil {
+			if common.ContainsInt64Slice(ms.Roles, role.ID) {
+				return ""
+			}
 		}
 	}
 
-	common.BotSession.GuildMemberRoleAdd(c.GS.ID, targetID, role.ID)
+	if delay > 0 {
+		scheduledevents2.ScheduleAddRole(context.Background(), c.GS.ID, targetID, role.ID, time.Now().Add(time.Second*time.Duration(delay)))
+	} else {
+		common.BotSession.GuildMemberRoleAdd(c.GS.ID, targetID, role.ID)
+	}
 
 	return ""
 }
@@ -715,47 +866,38 @@ func (c *Context) tmplTakeRoleName(target interface{}, name string, optionalArgs
 		return ""
 	}
 
-	role := int64(0)
-	c.GS.RLock()
-	for _, r := range c.GS.Guild.Roles {
-		if strings.EqualFold(r.Name, name) {
-			role = r.ID
-
-			// Maybe save a api request, but only if this is not delayed
-			if delay <= 0 {
-				ms := c.GS.Member(false, targetID)
-				hasRole := true
-				if ms != nil && ms.MemberSet {
-					hasRole = common.ContainsInt64Slice(ms.Roles, role)
-				}
-
-				if !hasRole {
-					c.GS.RUnlock()
-					return ""
-				}
-			}
-
-			break
-		}
+	role := c.findRoleByName(name)
+	if role == nil {
+		return "no role by the name of " + name + " found"
 	}
-	c.GS.RUnlock()
 
-	if role == 0 {
-		return ""
+	// Maybe save an api request
+	if delay <= 0 {
+		ms := c.GS.Member(false, targetID)
+		if ms != nil {
+			if common.ContainsInt64Slice(ms.Roles, role.ID) {
+				return ""
+			}
+		}
 	}
 
 	if delay > 0 {
-		scheduledevents2.ScheduleRemoveRole(context.Background(), c.GS.ID, targetID, role, time.Now().Add(time.Second*time.Duration(delay)))
+		scheduledevents2.ScheduleRemoveRole(context.Background(), c.GS.ID, targetID, role.ID, time.Now().Add(time.Second*time.Duration(delay)))
 	} else {
-		common.BotSession.GuildMemberRoleRemove(c.GS.ID, targetID, role)
+		common.BotSession.GuildMemberRoleRemove(c.GS.ID, targetID, role.ID)
 	}
 
 	return ""
 }
 
-func (c *Context) tmplAddRoleID(role interface{}) (string, error) {
+func (c *Context) tmplAddRoleID(role interface{}, optionalArgs ...interface{}) (string, error) {
 	if c.IncreaseCheckGenericAPICall() {
 		return "", ErrTooManyAPICalls
+	}
+
+	delay := 0
+	if len(optionalArgs) > 0 {
+		delay = tmplToInt(optionalArgs[0])
 	}
 
 	if c.MS == nil {
@@ -767,39 +909,42 @@ func (c *Context) tmplAddRoleID(role interface{}) (string, error) {
 		return "", errors.New("No role id specified")
 	}
 
-	err := common.AddRoleDS(c.MS, rid)
-	if err != nil {
-		return "", err
+	if delay > 0 {
+		scheduledevents2.ScheduleAddRole(context.Background(), c.GS.ID, c.MS.ID, rid, time.Now().Add(time.Second*time.Duration(delay)))
+	} else {
+		if err := common.AddRoleDS(c.MS, rid); err != nil {
+			return "", err
+		}
 	}
 
 	return "", nil
 }
 
-func (c *Context) tmplAddRoleName(name string) (string, error) {
+func (c *Context) tmplAddRoleName(name string, optionalArgs ...interface{}) (string, error) {
 	if c.IncreaseCheckGenericAPICall() {
 		return "", ErrTooManyAPICalls
+	}
+	
+	delay := 0
+	if len(optionalArgs) > 0 {
+		delay = tmplToInt(optionalArgs[0])
 	}
 
 	if c.MS == nil {
 		return "", nil
 	}
 
-	role := int64(0)
-	c.GS.RLock()
-	for _, r := range c.GS.Guild.Roles {
-		if strings.EqualFold(r.Name, name) {
-			role = r.ID
-			break
-		}
-	}
-	c.GS.RUnlock()
-
-	if role == 0 {
+	role := c.findRoleByName(name)
+	if role == nil {
 		return "", errors.New("No Role with name " + name + " found")
 	}
 
-	if err := common.AddRoleDS(c.MS, role); err != nil {
-		return "", err
+	if delay > 0 {
+		scheduledevents2.ScheduleAddRole(context.Background(), c.GS.ID, c.MS.ID, role.ID, time.Now().Add(time.Second*time.Duration(delay)))
+	} else {
+		if err := common.AddRoleDS(c.MS, role.ID); err != nil {
+			return "", err
+		}
 	}
 
 	return "", nil
@@ -827,7 +972,9 @@ func (c *Context) tmplRemoveRoleID(role interface{}, optionalArgs ...interface{}
 	if delay > 0 {
 		scheduledevents2.ScheduleRemoveRole(context.Background(), c.GS.ID, c.MS.ID, rid, time.Now().Add(time.Second*time.Duration(delay)))
 	} else {
-		common.RemoveRoleDS(c.MS, rid)
+		if err := common.RemoveRoleDS(c.MS, rid); err != nil {
+			return "", err
+		}
 	}
 
 	return "", nil
@@ -863,6 +1010,19 @@ func (c *Context) tmplRemoveRoleName(name string, optionalArgs ...interface{}) (
 	return "", nil
 }
 
+func (c *Context) findRoleByID(id int64) *discordgo.Role {
+ 	c.GS.RLock()
+ 	defer c.GS.RUnlock()
+
+ 	for _, r := range c.GS.Guild.Roles {
+ 		if r.ID == id {
+ 			return r
+ 		}
+ 	}
+
+ 	return nil
+ }
+ 
 func (c *Context) findRoleByName(name string) *discordgo.Role {
 	c.GS.RLock()
 	defer c.GS.RUnlock()
@@ -875,6 +1035,38 @@ func (c *Context) findRoleByName(name string) *discordgo.Role {
 
 	return nil
 }
+
+func (c *Context) tmplGetRole(r interface{}) (*discordgo.Role, error) {
+ 	if c.IncreaseCheckGenericAPICall() {
+ 		return nil, ErrTooManyAPICalls
+ 	}
+
+ 	switch t := r.(type) {
+ 	case int, int64:
+ 		return c.findRoleByID(ToInt64(t)), nil
+ 	case string:
+ 		parsed, err := strconv.ParseInt(t, 10, 64)
+ 		if err == nil {
+ 			return c.findRoleByID(parsed), nil
+ 		}
+
+ 		if strings.HasPrefix(t, "<@&") && strings.HasSuffix(t, ">") {
+ 			re := regexp.MustCompile(`\d+`)
+ 			found := re.FindAllString(t, 1)
+ 			if len(found) > 0 {
+ 				parsedMention, err := strconv.ParseInt(found[0], 10, 64)
+ 				if err == nil {
+ 					return c.findRoleByID(parsedMention), nil
+ 				}
+ 			}
+ 		}
+
+ 		return c.findRoleByName(t), nil
+ 	default:
+ 		return nil, nil
+ 	}
+ }
+
 
 func (c *Context) tmplDelResponse(args ...interface{}) string {
 	dur := 10
@@ -1018,7 +1210,7 @@ func (c *Context) tmplGetMessage(channel, msgID interface{}) (*discordgo.Message
 	return message, nil
 }
 
-func (c *Context) tmplGetMember(target interface{}) (*discordgo.Member, error) {
+func (c *Context) tmplGetMember(target interface{}) (*CtxMember, error) {
 	if c.IncreaseCheckGenericAPICall() {
 		return nil, ErrTooManyAPICalls
 	}
@@ -1033,7 +1225,7 @@ func (c *Context) tmplGetMember(target interface{}) (*discordgo.Member, error) {
 		return nil, nil
 	}
 
-	return member.DGoCopy(), nil
+	return CtxMemberFromMS(member), nil
 }
 
 func (c *Context) tmplGetChannel(channel interface{}) (*CtxChannel, error) {
@@ -1174,7 +1366,7 @@ func (c *Context) compileRegex(r string) (*regexp.Regexp, error) {
 		return cached, nil
 	}
 
-	if len(c.RegexCache) >= 10 {
+	if len(c.RegexCache) >= 20 {
 		return nil, ErrTooManyAPICalls
 	}
 
@@ -1225,13 +1417,13 @@ func (c *Context) reReplace(r string, s string, repl string) (string, error) {
 }
 
 func (c *Context) reSplit(r, s string, i int) ([]string, error) {
-	compiled, err := c.compileRegex(r)
-	if err != nil {
-		return nil, err
-	}
+ 	compiled, err := c.compileRegex(r)
+ 	if err != nil {
+ 		return nil, err
+ 	}
 
-	return compiled.Split(s, i), nil
-}
+ 	return compiled.Split(s, i), nil
+ }
 
 func (c *Context) tmplEditChannelName(channel interface{}, newName string) (string, error) {
 	if c.IncreaseCheckCallCounter("edit_channel", 10) {
@@ -1309,26 +1501,136 @@ func (c *Context) tmplOnlineCountBots() (int, error) {
 	return botCount, nil
 }
 
-func (c *Context) tmplEditNickname(Nickname string) (string, error) {
+func (c *Context) tmplEditNickname(user interface{}, nickname string) (string, error) {
+  if c.IncreaseCheckCallCounter("edit_nick", 3) {
+    return "", ErrTooManyCalls
+  }
 
-	if c.IncreaseCheckCallCounter("edit_nick", 2) {
-		return "", ErrTooManyCalls
-	}
+  id := targetUserID(user)
+  if id == 0 {
+    return "", nil
+  }
+  
+  if c.MS.ID != id && !bot.IsSpecialGuild(c.GS.ID) {
+ 	 return "", errors.New("**Error:** server not whitelisted, can't change other users nicknames. ")
+  }
 
-	if c.MS == nil {
-		return "", nil
-	}
-
-	if strings.Compare(c.MS.Nick, Nickname) == 0 {
-
-		return "", nil
-
-	}
-
-	err := common.BotSession.GuildMemberNickname(c.GS.ID, c.MS.ID, Nickname)
-	if err != nil {
-		return "", err
-	}
-
-	return "", nil
+  err := common.BotSession.GuildMemberNickname(c.GS.ID, id, nickname)
+  return "", err
 }
+
+type StdDepth struct {
+ 	depth int
+ }
+
+ func newStdDepth() *StdDepth {
+ 	return &StdDepth{
+ 		depth: 0,
+ 	}
+ }
+
+ func (sd *StdDepth) Add() {
+ 	sd.depth += 1
+ }
+
+ func (c *Context) tmplStandardize(input interface{}) interface{} {
+ 	depth := newStdDepth()
+ 	return depth.StdInit(input)
+ }
+
+ func (sd *StdDepth) StdInit(input interface{}) interface{} {
+ 	val := reflect.ValueOf(input)
+ 	switch val.Kind() {
+ 	case reflect.Map:
+ 		switch t := input.(type) {
+ 		case Dict, SDict:
+ 			return t
+ 		case map[string]interface{}:
+ 			return sd.StdStringMap(t)
+ 		default:
+ 			return sd.StdMap(t)
+ 		}
+ 	default:
+ 		switch t := input.(type) {
+ 		case []interface{}:
+ 			return sd.StdSlice(t)
+ 		case *time.Time:
+ 			return *t
+ 		case float64:
+ 			i, err := strconv.ParseInt(fmt.Sprint(t), 10, 64)
+ 			if err != nil {
+ 				return t
+ 			}
+ 			return i
+ 		default:
+ 			return t
+ 		}
+ 	}
+ }
+
+ func (sd *StdDepth) StdMap(input interface{}) interface{} {
+ 	if sd.depth >= 10 {
+ 		return input
+ 	}
+ 	sd.Add()
+ 	out := make(Dict)
+ 	val := reflect.ValueOf(input)
+ 	switch val.Kind() {
+ 	case reflect.Map:
+ 		for _, k := range val.MapKeys() {
+ 			v := val.MapIndex(k)
+ 			switch t := v.Interface().(type) {
+ 			case map[interface{}]interface{}:
+ 				out.Set(k.Interface(), sd.StdMap(t))
+ 			case map[string]interface{}:
+ 				out.Set(k.Interface(), sd.StdStringMap(t))
+ 			case []interface{}:
+ 				out.Set(k.Interface(), sd.StdSlice(t))
+ 			default:
+ 				out.Set(k.Interface(), sd.StdInit(t))
+ 			}
+ 		}
+ 		return out
+ 	}
+ 	return nil
+ }
+
+ func (sd *StdDepth) StdStringMap(input interface{}) interface{} {
+ 	if sd.depth >= 10 {
+ 		return input
+ 	}
+ 	sd.Add()
+ 	out := make(SDict)
+ 	val := reflect.ValueOf(input)
+ 	switch val.Kind() {
+ 	case reflect.Map:
+ 		for _, k := range val.MapKeys() {
+ 			v := val.MapIndex(k)
+ 			switch t := v.Interface().(type) {
+ 			case map[interface{}]interface{}:
+ 				out.Set(k.Interface().(string), sd.StdMap(t))
+ 			case map[string]interface{}:
+ 				out.Set(k.Interface().(string), sd.StdStringMap(t))
+ 			case []interface{}:
+ 				out.Set(k.Interface().(string), sd.StdSlice(t))
+ 			default:
+ 				out.Set(k.Interface().(string), sd.StdInit(t))
+ 			}
+ 		}
+ 		return out
+ 	}
+ 	return nil
+ }
+
+ func (sd *StdDepth) StdSlice(input []interface{}) interface{} {
+ 	if sd.depth >= 10 {
+ 		return input
+ 	}
+ 	sd.Add()
+ 	var out Slice
+ 	for _, v := range input {
+ 		out = append(out, sd.StdInit(v))
+ 	}
+
+ 	return out
+ }

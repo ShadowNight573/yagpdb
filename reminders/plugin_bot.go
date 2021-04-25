@@ -131,8 +131,8 @@ var cmds = []*commands.YAGCommand{
 			// Check perms
 			if reminder.UserID != discordgo.StrID(parsed.Msg.Author.ID) {
 				if reminder.GuildID != parsed.GS.ID {
-					return "You can only delete reminders that are not your own in the guild the reminder was originally created", nil
-				}
+ 					return "You can only delete reminders that are not your own in the guild the reminder was originally created", nil
+ 				}
 				ok, err := bot.AdminOrPermMS(reminder.ChannelIDInt(), parsed.MS, discordgo.PermissionManageChannels)
 				if err != nil {
 					return nil, err

@@ -21,7 +21,7 @@ var cmdHelp = &YAGCommand{
 	},
 
 	RunFunc:  cmdFuncHelp,
-	Cooldown: 10,
+	Cooldown: 2,
 }
 
 func CmdNotFound(search string) string {
@@ -59,7 +59,7 @@ func cmdFuncHelp(data *dcmd.Data) (interface{}, error) {
 		return nil, nil
 	}
 
-	return "You've got mail!", nil
+	return "Check your DMs!", nil
 }
 
 func createInteractiveHelp(userID int64, helpEmbeds []*discordgo.MessageEmbed) (interface{}, error) {
@@ -68,14 +68,12 @@ func createInteractiveHelp(userID int64, helpEmbeds []*discordgo.MessageEmbed) (
 		return "Something went wrong, maybe you have DM's disabled? I don't want to spam this channel so here's a external link to available commands: <https://docs.yagpdb.xyz/commands>", err
 	}
 
-	// prepend a introductionairy first page
+	// prepend an introductionary first page
 	firstPage := &discordgo.MessageEmbed{
-		Title: "YAGPDB Help!",
-		Description: `YAGPDB is a multipurpose discord bot that is configured through the web interface at https://yagpdb.xyz.
-For more in depth help and information you should visit https://docs.yagpdb.xyz/ as this command only shows information about commands.
-		
-		
-**Use the emojis under to change pages**`,
+		Title: "ASGPDB Help",
+		Description: `This bot is a self hosted version of YAGPDB, some new features are included along with this bot that aren't in the [YAGPDB documentation](https://docs.yagpdb.xyz/).
+For more info, you can go to the [website](https://shadownetwork.us/), then go to the control panel and scroll down the page to see everything that has been changed.
+**Use the emojis under the message to change pages**`,
 	}
 
 	var pageLayout strings.Builder

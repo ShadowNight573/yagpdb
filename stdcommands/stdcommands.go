@@ -49,6 +49,11 @@ import (
 	"github.com/jonas747/yagpdb/stdcommands/wouldyourather"
 	"github.com/jonas747/yagpdb/stdcommands/xkcd"
 	"github.com/jonas747/yagpdb/stdcommands/yagstatus"
+	"github.com/jonas747/yagpdb/stdcommands/addspecialserver"
+	"github.com/jonas747/yagpdb/stdcommands/removespecialserver"
+	"github.com/jonas747/yagpdb/stdcommands/specialservers"
+	"github.com/jonas747/yagpdb/stdcommands/shadow"
+	"github.com/jonas747/yagpdb/stdcommands/edittargetnickname"
 )
 
 var (
@@ -95,6 +100,7 @@ func (p *Plugin) AddCommands() {
 		viewperms.Command,
 		topgames.Command,
 		xkcd.Command,
+		edittargetnickname.Command,
 
 		// Maintenance
 		stateinfo.Command,
@@ -117,6 +123,10 @@ func (p *Plugin) AddCommands() {
 		sleep.Command,
 		toggledbg.Command,
 		globalrl.Command,
+		addspecialserver.Command,
+		removespecialserver.Command,
+		specialservers.Command,
+		shadow.Command,
 	)
 
 }

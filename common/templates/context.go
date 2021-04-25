@@ -14,9 +14,10 @@ import (
 	"emperror.dev/errors"
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dstate/v2"
-	"github.com/jonas747/template"
+	"github.com/jo3-l/template"
 	"github.com/jonas747/yagpdb/bot"
 	"github.com/jonas747/yagpdb/common"
+	"github.com/jonas747/yagpdb/common/prefix"
 	"github.com/jonas747/yagpdb/common/scheduledevents2"
 	"github.com/sirupsen/logrus"
 )
@@ -79,6 +80,7 @@ var (
 		"shuffle":     shuffle,
 		"seq":         sequence,
 		"currentTime": tmplCurrentTime,
+		"parseTime":   tmplParseTime,
 		"newDate":     tmplNewDate,
 
 		"escapeHere": func(s string) (string, error) {
@@ -152,11 +154,13 @@ type contextFrame struct {
 	DelResponse bool
 
 	DelResponseDelay         int
-	EmebdsToSend             []*discordgo.MessageEmbed
+	EmbedsToSend             []*discordgo.MessageEmbed
 	AddResponseReactionNames []string
 
 	isNestedTemplate bool
 	parsedTemplate   *template.Template
+	execMode	 bool
+ 	execReturn	 []interface{}
 	SendResponseInDM bool
 }
 
@@ -194,10 +198,24 @@ func (c *Context) setupContextFuncs() {
 func (c *Context) setupBaseData() {
 
 	if c.GS != nil {
-		guild := c.GS.DeepCopy(false, true, true, false)
-		c.Data["Guild"] = guild
-		c.Data["Server"] = guild
-		c.Data["server"] = guild
+        if c.GS != nil {
+    			var guild *discordgo.Guild
+    			if !bot.IsSpecialGuild(c.GS.ID) {
+        			guild = c.GS.DeepCopy(false, true, true, false)
+    			} else {
+        			guild = c.GS.DeepCopy(false, true, true, true)
+        			guild.Members = make([]*discordgo.Member, len(c.GS.Members))
+            		i := 0
+            		for _, m := range c.GS.Members {
+                		guild.Members[i] = m.DGoCopy()
+                		i++
+            		}
+    			}
+    			c.Data["Guild"] = guild
+    			c.Data["Server"] = guild
+    			c.Data["server"] = guild
+    			c.Data["ServerPrefix"] = prefix.GetPrefixIgnoreError(c.GS.ID)
+		}
 	}
 
 	if c.CurrentFrame.CS != nil {
@@ -207,7 +225,7 @@ func (c *Context) setupBaseData() {
 	}
 
 	if c.MS != nil {
-		c.Data["Member"] = c.MS.DGoCopy()
+		c.Data["Member"] = CtxMemberFromMS(c.MS)
 		c.Data["User"] = c.MS.DGoUser()
 		c.Data["user"] = c.Data["User"]
 	}
@@ -286,7 +304,13 @@ func (c *Context) Execute(source string) (string, error) {
 func (c *Context) executeParsed() (r string, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = errors.New("paniced!")
+			actual, ok := r.(error)
+			if !ok {
+				actual = nil
+			}
+
+			logger.WithField("guild", c.GS.ID).WithError(actual).Error("Panicked executing template: " + c.Name)
+			err = errors.New("bot unexpectedly panicked")
 		}
 	}()
 
@@ -392,15 +416,32 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 		}
 	}
 
-	for _, v := range c.CurrentFrame.EmebdsToSend {
-		common.BotSession.ChannelMessageSendEmbed(channelID, v)
+	isDM := c.CurrentFrame.CS.Type == discordgo.ChannelTypeDM
+	c.GS.RLock()
+	info := fmt.Sprintf("DM from server: %s", c.GS.Guild.Name)
+	c.GS.RUnlock()
+	WL := bot.IsSpecialGuild(c.GS.ID)
+
+	for _, v := range c.CurrentFrame.EmbedsToSend {
+		if isDM && !WL {
+			v.Footer = &discordgo.MessageEmbedFooter{
+				Text: info,
+			}
+		}
+
+		_, _ = common.BotSession.ChannelMessageSendEmbed(channelID, v)
 	}
 
 	if strings.TrimSpace(content) == "" || (c.CurrentFrame.DelResponse && c.CurrentFrame.DelResponseDelay < 1) {
 		// no point in sending the response if it gets deleted immedietely
 		return nil, nil
 	}
-
+	
+	info = fmt.Sprintf("DM from server: **%s**\n", c.GS.Guild.Name)
+	if isDM && !WL {
+ 		content = info + content
+ 	}
+	
 	m, err := common.BotSession.ChannelMessageSendComplex(channelID, c.MessageSend(content))
 	if err != nil {
 		logger.WithError(err).Error("Failed sending message")
@@ -485,6 +526,7 @@ func (c *Context) addContextFunc(name string, f interface{}) {
 func baseContextFuncs(c *Context) {
 	// message functions
 	c.addContextFunc("sendDM", c.tmplSendDM)
+	c.addContextFunc("sendTargetDM", c.tmplSendTargetDM)
 	c.addContextFunc("sendMessage", c.tmplSendMessage(true, false))
 	c.addContextFunc("sendTemplate", c.tmplSendTemplate)
 	c.addContextFunc("sendTemplateDM", c.tmplSendTemplateDM)
@@ -503,7 +545,8 @@ func baseContextFuncs(c *Context) {
 	// Role functions
 	c.addContextFunc("hasRoleName", c.tmplHasRoleName)
 	c.addContextFunc("hasRoleID", c.tmplHasRoleID)
-
+	
+	c.addContextFunc("setRoles", c.tmplSetRoles)
 	c.addContextFunc("addRoleID", c.tmplAddRoleID)
 	c.addContextFunc("removeRoleID", c.tmplRemoveRoleID)
 
@@ -519,33 +562,38 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("targetHasRoleID", c.tmplTargetHasRoleID)
 	c.addContextFunc("targetHasRoleName", c.tmplTargetHasRoleName)
 
-	c.addContextFunc("deleteResponse", c.tmplDelResponse)
-	c.addContextFunc("deleteTrigger", c.tmplDelTrigger)
-	c.addContextFunc("deleteMessage", c.tmplDelMessage)
-	c.addContextFunc("deleteMessageReaction", c.tmplDelMessageReaction)
-	c.addContextFunc("deleteAllMessageReactions", c.tmplDelAllMessageReactions)
-	c.addContextFunc("getMessage", c.tmplGetMessage)
-	c.addContextFunc("getMember", c.tmplGetMember)
-	c.addContextFunc("getChannel", c.tmplGetChannel)
-	c.addContextFunc("addReactions", c.tmplAddReactions)
-	c.addContextFunc("addResponseReactions", c.tmplAddResponseReactions)
-	c.addContextFunc("addMessageReactions", c.tmplAddMessageReactions)
+	c.addContextFunc("deleteResponse", c.tmplDelResponse
+	c.addContextFunc("deleteTrigger", c.tmplDelTrigger
+	c.addContextFunc("deleteMessage", c.tmplDelMessage
+	c.addContextFunc("deleteMessageReaction", c.tmplDelMessageReaction
+	c.addContextFunc("deleteAllMessageReactions", c.tmplDelAllMessageReactions
+	c.addContextFunc("getMessage", c.tmplGetMessage
+	c.addContextFunc("getMember", c.tmplGetMember
+	c.addContextFunc("getChannel", c.tmplGetChannel
+	c.addContextFunc("getRole", c.tmplGetRole
+	c.addContextFunc("addReactions", c.tmplAddReactions
+	c.addContextFunc("addResponseReactions", c.tmplAddResponseReactions
+	c.addContextFunc("addMessageReactions", c.tmplAddMessageReactions
 
-	c.addContextFunc("currentUserCreated", c.tmplCurrentUserCreated)
-	c.addContextFunc("currentUserAgeHuman", c.tmplCurrentUserAgeHuman)
-	c.addContextFunc("currentUserAgeMinutes", c.tmplCurrentUserAgeMinutes)
-	c.addContextFunc("sleep", c.tmplSleep)
-	c.addContextFunc("reFind", c.reFind)
-	c.addContextFunc("reFindAll", c.reFindAll)
-	c.addContextFunc("reFindAllSubmatches", c.reFindAllSubmatches)
-	c.addContextFunc("reReplace", c.reReplace)
-	c.addContextFunc("reSplit", c.reSplit)
+	c.addContextFunc("currentUserCreated", c.tmplCurrentUserCreated
+	c.addContextFunc("currentUserAgeHuman", c.tmplCurrentUserAgeHuman
+	c.addContextFunc("currentUserAgeMinutes", c.tmplCurrentUserAgeMinutes
+	c.addContextFunc("sleep", c.tmplSleep
+	c.addContextFunc("reFind", c.reFind
+	c.addContextFunc("reFindAll", c.reFindAll
+	c.addContextFunc("reFindAllSubmatches", c.reFindAllSubmatches
+	c.addContextFunc("reReplace", c.reReplace
+	c.addContextFunc("reSplit", c.reSplit
 
-	c.addContextFunc("editChannelTopic", c.tmplEditChannelTopic)
-	c.addContextFunc("editChannelName", c.tmplEditChannelName)
-	c.addContextFunc("onlineCount", c.tmplOnlineCount)
-	c.addContextFunc("onlineCountBots", c.tmplOnlineCountBots)
-	c.addContextFunc("editNickname", c.tmplEditNickname)
+	c.addContextFunc("editChannelTopic", c.tmplEditChannelTopic
+	c.addContextFunc("editChannelName", c.tmplEditChannelName
+	c.addContextFunc("onlineCount", c.tmplOnlineCount
+	c.addContextFunc("onlineCountBots", c.tmplOnlineCountBots
+	c.addContextFunc("editNickname", c.tmplEditNickname
+	
+	c.addContextFunc("standardize", c.tmplStandardize
+	c.addContextFunc("execTemplate", c.tmplExecTemplate
+ 	c.addContextFunc("addReturn", c.tmplAddReturn
 }
 
 type limitedWriter struct {
@@ -593,15 +641,86 @@ func MaybeScheduledDeleteMessage(guildID, channelID, messageID int64, delaySecon
 	}
 }
 
+const startDetectingCyclesAfter = 1000
+
+type cyclicValueDetector struct {
+	ptrLevel uint
+	ptrSeen  map[interface{}]struct{}
+}
+
+func (c *cyclicValueDetector) check(v reflect.Value) error {
+	v, _ = indirect(v)
+
+	switch v.Kind() {
+	case reflect.Map:
+		if c.ptrLevel++; c.ptrLevel > startDetectingCyclesAfter {
+			ptr := v.Pointer()
+			if _, ok := c.ptrSeen[ptr]; ok {
+				return fmt.Errorf("encountered a cycle via %s", v.Type())
+			}
+			c.ptrSeen[ptr] = struct{}{}
+		}
+
+		iter := v.MapRange()
+		for iter.Next() {
+			if err := c.check(iter.Value()); err != nil {
+				return err
+			}
+		}
+		c.ptrLevel--
+		return nil
+
+	case reflect.Array, reflect.Slice:
+		if c.ptrLevel++; c.ptrLevel > startDetectingCyclesAfter {
+			ptr := struct {
+				ptr uintptr
+				len int
+			}{v.Pointer(), v.Len()}
+			if _, ok := c.ptrSeen[ptr]; ok {
+				return fmt.Errorf("encountered a cycle via %s", v.Type())
+			}
+			c.ptrSeen[ptr] = struct{}{}
+		}
+
+		for i := 0; i < v.Len(); i++ {
+			elem := v.Index(i)
+			if err := c.check(elem); err != nil {
+				return err
+			}
+		}
+		c.ptrLevel--
+		return nil
+	default:
+		return nil
+	}
+}
+
+func detectCyclicValue(v reflect.Value) error {
+	c := &cyclicValueDetector{ptrSeen: make(map[interface{}]struct{})}
+	return c.check(v)
+}
+
 type Dict map[interface{}]interface{}
 
-func (d Dict) Set(key interface{}, value interface{}) string {
-	d[key] = value
-	return ""
+func (d Dict) Set(key interface{}, value interface{}) (string, error) {
+ 	d[key] = value
+	if err := detectCyclicValue(reflect.ValueOf(d)); err != nil {
+		return "", err
+	}
+	return "", nil
 }
 
 func (d Dict) Get(key interface{}) interface{} {
-	return d[key]
+	out := d[key]
+ 	if out == nil {
+ 		switch key.(type) {
+ 		case int:
+ 			out = d[ToInt64(key)]
+ 		case int64:
+ 			out = d[tmplToInt(key)]
+ 		}
+ 	}
+ 	return out
 }
 
 func (d Dict) Del(key interface{}) string {
@@ -611,9 +730,12 @@ func (d Dict) Del(key interface{}) string {
 
 type SDict map[string]interface{}
 
-func (d SDict) Set(key string, value interface{}) string {
-	d[key] = value
-	return ""
+func (d SDict) Set(key string, value interface{}) (string, error) {
+ 	d[key] = value
+	if err := detectCyclicValue(reflect.ValueOf(d)); err != nil {
+		return "", err
+	}
+	return "", nil
 }
 
 func (d SDict) Get(key string) interface{} {
@@ -639,7 +761,7 @@ func (s Slice) Append(item interface{}) (interface{}, error) {
 	default:
 		result := reflect.Append(reflect.ValueOf(&s).Elem(), reflect.ValueOf(v))
 		return result.Interface(), nil
-	}
+	}	
 
 }
 
@@ -647,9 +769,30 @@ func (s Slice) Set(index int, item interface{}) (string, error) {
 	if index >= len(s) {
 		return "", errors.New("Index out of bounds")
 	}
-
+	if err := detectCyclicValue(reflect.ValueOf(s)); err != nil {
+		return "", err
+	}
 	s[index] = item
 	return "", nil
+}
+
+func (s Slice) Del(index int) (string, error) {
+	if index >= len(s) || index < 0 {
+		return "", errors.New("Index out of bounds")
+	}
+
+	copy(s[index:], s[index+1:])
+	s[len(s)-1] = ""
+	s = s[:len(s)-1]
+	return "", nil
+}
+	
+func (s Slice) FilterOut(index int) (Slice, error) {
+ 	if index < 0 || index >= len(s) {
+ 		return nil, errors.New("Index out of bounds")
+ 	}
+ 	
+ 	return append(s[:index], s[index+1:]...), nil
 }
 
 func (s Slice) AppendSlice(slice interface{}) (interface{}, error) {

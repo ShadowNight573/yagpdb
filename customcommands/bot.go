@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
+	"bytes"
 
 	"github.com/jonas747/yagpdb/analytics"
 	"github.com/jonas747/yagpdb/premium"
@@ -93,11 +94,14 @@ var cmdListCommands = &commands.YAGCommand{
 	CmdCategory:    commands.CategoryTool,
 	Name:           "CustomCommands",
 	Aliases:        []string{"cc"},
-	Description:    "Shows a custom command specified by id or trigger, or lists them all",
+	Description:    "Shows a custom command specified by id or trigger, or lists them all\n\nThe -file switch only works for listing all commands.",
 	ArgumentCombos: [][]int{[]int{0}, []int{1}, []int{}},
 	Arguments: []*dcmd.ArgDef{
 		&dcmd.ArgDef{Name: "ID", Type: dcmd.Int},
 		&dcmd.ArgDef{Name: "Trigger", Type: dcmd.String},
+	},
+	ArgSwitches: []*dcmd.ArgDef{
+		{Switch: "file", Name: "Send the commands in a file"},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		ccs, err := models.CustomCommands(qm.Where("guild_id = ?", data.GS.ID), qm.OrderBy("local_id")).AllG(data.Context())
@@ -115,31 +119,99 @@ var cmdListCommands = &commands.YAGCommand{
 		for _, group := range groups {
 			groupMap[group.ID] = group.Name
 		}
-
+		
+		var file bool
+		if data.Switches["file"].Value != nil && data.Switches["file"].Value.(bool) {
+			file = true
+		}
+		
 		foundCCS, provided := FindCommands(ccs, data)
 		if len(foundCCS) < 1 {
-			list := StringCommands(ccs, groupMap)
+			list := StringCommands(ccs, groupMap, file)
 			if len(list) == 0 {
 				return "This server has no custom commands, sry.", nil
 			}
 			if provided {
-				return "No command by that name or id found, here is a list of them all:\n" + list, nil
+				if !file {
+					return "No command by that name or id found, here is a list of them all:\n" + list, nil
+				}
+				var buf bytes.Buffer
+				buf.WriteString(list)
+				msg := &discordgo.MessageSend{}
+				msg.Content = "No command by that name or id found, here is a list of them all"
+				msg.File = &discordgo.File{
+					Name:        "Commands.txt",
+					ContentType: "text/plain",
+					Reader:      &buf,
+				}
+				
+				_, err := common.BotSession.ChannelMessageSendComplex(data.CS.ID, msg)
+				if err != nil {
+					return "", err
+				}
+
+				return "", nil
 			} else {
-				return "No id or trigger provided, here is a list of all server commands:\n" + list, nil
+				if !file {
+					return "No id or trigger provided, here is a list of all server commands:\n" + list, nil
+				}
+				var buf bytes.Buffer
+				buf.WriteString(list)
+				msg := &discordgo.MessageSend{}
+				msg.Content = "No id or trigger provided, here is a list of all server commands"
+				msg.File = &discordgo.File{
+					Name:        "Commands.txt",
+					ContentType: "text/plain",
+					Reader:      &buf,
+				}
+				
+				_, err := common.BotSession.ChannelMessageSendComplex(data.CS.ID, msg)
+				if err != nil {
+					return "", err
+				}
+
+				return "", nil
 			}
 		}
 
 		if len(foundCCS) > 1 {
-			return "More than 1 matched command\n" + StringCommands(foundCCS, groupMap), nil
+			file = false
+			return "More than 1 matched command\n" + StringCommands(foundCCS, groupMap, file), nil
 		}
 
 		cc := foundCCS[0]
 
+		var trigger string
+		var response string
 		if cc.TextTrigger != "" {
-			return fmt.Sprintf("#%d - %s: `%s` - Case sensitive trigger: `%t` - Group: `%s`\n```\n%s\n```", cc.LocalID, CommandTriggerType(cc.TriggerType), cc.TextTrigger, cc.TextTriggerCaseSensitive, groupMap[cc.GroupID.Int64], strings.Join(cc.Responses, "```\n```")), nil
+			trigger = fmt.Sprintf("#%d - %s: `%s` - Case sensitive trigger: `%t` - Group: `%s`", cc.LocalID, CommandTriggerType(cc.TriggerType), cc.TextTrigger, cc.TextTriggerCaseSensitive, groupMap[cc.GroupID.Int64])
 		} else {
-			return fmt.Sprintf("#%d - %s - Group: `%s`\n```\n%s\n```", cc.LocalID, CommandTriggerType(cc.TriggerType), groupMap[cc.GroupID.Int64], strings.Join(cc.Responses, "```\n```")), nil
+			trigger = fmt.Sprintf("#%d - %s - Group: `%s`", cc.LocalID, CommandTriggerType(cc.TriggerType), groupMap[cc.GroupID.Int64])
 		}
+		
+		response = fmt.Sprintf("\n```\n%s\n```", strings.Join(cc.Responses, "```\n```"))
+		if len(response) <= 2000 - len(trigger) {
+			return trigger + response, nil
+		}
+		
+		response = fmt.Sprintf("\n%s\n", strings.Join(cc.Responses, "\n\n\n\n------------------------------\nNote: This command has multiple responses. This message separates them.\n------------------------------\n\n\n\n"))
+		var buf bytes.Buffer
+		buf.WriteString(response)
+		msg := &discordgo.MessageSend{}
+		
+		msg.Content = trigger
+		msg.File = &discordgo.File{
+			Name:        "Response.txt",
+			ContentType: "text/plain",
+			Reader:      &buf,
+		}
+		
+		_, err = common.BotSession.ChannelMessageSendComplex(data.CS.ID, msg)
+		if err != nil {
+			return "", err
+		}
+
+		return "", nil
 	},
 }
 
@@ -170,14 +242,22 @@ func FindCommands(ccs []*models.CustomCommand, data *dcmd.Data) (foundCCS []*mod
 	return
 }
 
-func StringCommands(ccs []*models.CustomCommand, gMap map[int64]string) string {
+func StringCommands(ccs []*models.CustomCommand, gMap map[int64]string, file bool) string {
 	out := ""
 	for _, cc := range ccs {
 		switch cc.TextTrigger {
 		case "":
-			out += fmt.Sprintf("`#%3d:` %s - Group: `%s`\n", cc.LocalID, CommandTriggerType(cc.TriggerType).String(), gMap[cc.GroupID.Int64])
+			if !file {
+				out += fmt.Sprintf("`#%3d:` %s - Group: `%s`\n", cc.LocalID, CommandTriggerType(cc.TriggerType).String(), gMap[cc.GroupID.Int64])
+			} else {
+				out += fmt.Sprintf("#%3d: %s - Group: %s\n", cc.LocalID, CommandTriggerType(cc.TriggerType).String(), gMap[cc.GroupID.Int64])
+			}
 		default:
-			out += fmt.Sprintf("`#%3d:` `%s`: %s - Group: `%s`\n", cc.LocalID, cc.TextTrigger, CommandTriggerType(cc.TriggerType).String(), gMap[cc.GroupID.Int64])
+			if !file {
+				out += fmt.Sprintf("`#%3d:` `%s`: %s - Group: `%s`\n", cc.LocalID, cc.TextTrigger, CommandTriggerType(cc.TriggerType).String(), gMap[cc.GroupID.Int64])
+			} else {
+				out += fmt.Sprintf("#%3d: %s: %s - Group: %s\n", cc.LocalID, cc.TextTrigger, CommandTriggerType(cc.TriggerType).String(), gMap[cc.GroupID.Int64])
+			}
 		}
 	}
 
@@ -426,7 +506,12 @@ func HandleMessageCreate(evt *eventsystem.EventData) {
 	}
 
 	member := dstate.MSFromDGoMember(evt.GS, mc.Member)
-
+	ms := evt.GS.MemberCopy(true, mc.Member.User.ID)
+ 	if ms != nil {
+ 		member.PresenceStatus = ms.PresenceStatus
+ 		member.PresenceGame = ms.PresenceGame
+ 	}
+ 
 	var matchedCustomCommands []*TriggeredCC
 	var err error
 	common.LogLongCallTime(time.Second, true, "Took longer than a second to fetch custom commands", logrus.Fields{"guild": evt.GS.ID}, func() {

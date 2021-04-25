@@ -1,0 +1,54 @@
+package specialservers
+
+import (
+    "fmt"
+
+    "github.com/jonas747/dcmd"
+    "github.com/jonas747/yagpdb/bot/models"
+    "github.com/jonas747/yagpdb/commands"
+    "github.com/jonas747/yagpdb/common"
+    "github.com/jonas747/yagpdb/stdcommands/util"
+    "github.com/mediocregopher/radix/v3"
+    "github.com/volatiletech/sqlboiler/queries/qm"
+)
+
+var Command = &commands.YAGCommand{
+    Cooldown:             2,
+    CmdCategory:          commands.CategoryDebug,
+    HideFromCommandsPage: true,
+    Name:                 "specialservers",
+    Description:          ";))",
+    HideFromHelp:         true,
+    Arguments: []*dcmd.ArgDef{
+        {Name: "Skip", Help: "Entries to skip", Type: dcmd.Int, Default: 0},
+    },
+    RunFunc: util.RequireOwner(func(data *dcmd.Data) (interface{}, error) {
+        offset := data.Args[0].Int()
+
+        var whitelisted []interface{}
+        err := common.RedisPool.Do(radix.Cmd(&whitelisted, "SMEMBERS", "special_servers"))
+        if err != nil {
+            return "", err
+        }
+
+        results, err := models.JoinedGuilds(
+            qm.Where("left_at is null"),           // Don't include guilds that we left
+            qm.WhereIn("id in ?", whitelisted...), // Only whitelisted guilds
+            qm.OrderBy("id desc"),                 // Needed so we have consistent output
+            qm.Limit(10),                          // Limit to 10 results
+            qm.Offset(offset),
+        ).AllG(data.Context())
+        if err != nil {
+            return "", err
+        }
+
+        resp := "**Whitelisted Servers**\n"
+        if len(results) == 0 {
+            return resp + "None", nil
+        }
+        for _, v := range results {
+            resp += fmt.Sprintf("`%d` : __%s__\n", v.ID, v.Name)
+        }
+        return resp, nil
+    }),
+}

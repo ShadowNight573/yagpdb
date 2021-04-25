@@ -21,6 +21,31 @@ import (
 // walking the parameters and treating them as key-value pairs.  The number
 // of parameters must be even.
 func Dictionary(values ...interface{}) (Dict, error) {
+	
+	if len(values) == 1 {
+         val, isNil := indirect(reflect.ValueOf(values[0]))
+         if isNil || values[0] == nil {
+             return nil, errors.New("dict: nil value passed")
+         }
+
+         if Dict, ok := val.Interface().(Dict); ok {
+             return Dict, nil
+         }
+
+         switch val.Kind() {
+         case reflect.Map:
+             iter := val.MapRange()
+             mapCopy := make(map[interface{}]interface{})
+             for iter.Next() {
+                 mapCopy[iter.Key().Interface()] = iter.Value().Interface()
+             }
+             return Dict(mapCopy), nil
+         default:
+             return nil, errors.New("cannot convert data of type: " + reflect.TypeOf(values[0]).String())
+         }
+
+    }
+     
 	if len(values)%2 != 0 {
 		return nil, errors.New("invalid dict call")
 	}
@@ -880,11 +905,60 @@ func ToByte(from interface{}) []byte {
 func tmplJson(v interface{}) (string, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
-		return "", err
+		b, err = json.Marshal(convertMap(v))
+ 		if err != nil {
+ 			return "", err
+ 		}
 	}
 
 	return string(b), nil
 }
+
+func convertMap(m interface{}) interface{} {
+ 	out := map[string]interface{}{}
+ 	val := reflect.ValueOf(m)
+ 	switch val.Kind() {
+ 	case reflect.Map:
+ 		for _, k := range val.MapKeys() {
+ 			v := val.MapIndex(k)
+ 			switch t := v.Interface().(type) {
+ 			case map[interface{}]interface{}, Dict, SDict:
+ 				out[fmt.Sprint(k)] = convertMap(t)
+ 			case Slice:
+ 				out[fmt.Sprint(k)] = handleSlices(t, nil)
+ 			case []interface{}:
+ 				out[fmt.Sprint(k)] = handleSlices(nil, t)
+ 			default:
+ 				out[fmt.Sprint(k)] = t
+ 			}
+ 		}
+ 		return out
+ 	default:
+ 		switch t := m.(type) {
+ 		case Slice:
+ 			return handleSlices(t, nil)
+ 		case []interface{}:
+ 			return handleSlices(nil, t)
+ 		default:
+ 			return m
+ 		}
+ 	}
+ }
+
+ func handleSlices(a Slice, b []interface{}) []interface{} {
+ 	var out []interface{}
+ 	if a == nil {
+ 		for _, v := range b {
+ 			out = append(out, convertMap(v))
+ 		}
+ 	} else {
+ 		for _, v := range a {
+ 			out = append(out, convertMap(v))
+ 		}
+ 	}
+
+ 	return out
+ }
 
 func tmplFormatTime(t time.Time, args ...string) string {
 	layout := time.RFC822
@@ -986,6 +1060,49 @@ func slice(item reflect.Value, indices ...reflect.Value) (reflect.Value, error) 
 func tmplCurrentTime() time.Time {
 	return time.Now().UTC()
 }
+
+func tmplParseTime(layouts interface{}, value string, optionalArgs ...string) (time.Time, error) {
+ 	loc := time.UTC
+
+ 	var err error
+ 	if len(optionalArgs) >= 1 {
+ 		loc, err = time.LoadLocation(optionalArgs[0])
+ 		if err != nil {
+ 			return time.Time{}, err
+ 		}
+ 	}
+
+ 	var parsed time.Time
+ 	val := reflect.ValueOf(layouts)
+ 	switch val.Kind() {
+ 	case reflect.Slice, reflect.Array:
+ 		for i := 0; i < val.Len(); i++ {
+ 			switch layout := val.Index(i).Interface().(type) {
+ 			case string:
+ 				parsed, err = time.ParseInLocation(layout, value, loc)
+ 				if err != nil {
+ 					// Error recovery is essentially impossible in CC, so throwing an error on invalid input would be useless
+ 					continue
+ 				}
+
+ 				return parsed, nil
+ 			default:
+ 				return time.Time{}, errors.New("can't parse time with non-string layout")
+ 			}
+ 		}
+ 		return time.Time{}, nil
+ 	case reflect.String:
+ 		parsed, err = time.ParseInLocation(val.Interface().(string), value, loc)
+ 		if err != nil {
+ 			return time.Time{}, nil
+ 		}
+
+ 		return parsed, nil
+ 	default:
+ 		return time.Time{}, errors.New("argument passed to parseTime() was neither a string slice nor a string")
+ 	}
+ }
+
 
 func tmplNewDate(year, monthInt, day, hour, min, sec int, location ...string) (time.Time, error) {
 	loc := time.UTC

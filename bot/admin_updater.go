@@ -45,6 +45,10 @@ var (
 	confReadOnlyAccessRole = config.RegisterOption("yagpdb.readonly.access.role", "People with this role on the main server has global read only access to configs", int64(0))
 )
 
+func MainGuildID() int64 {
+    return int64(confMainServer.GetInt())
+}
+
 func loopCheckAdmins() {
 	mainServer = int64(confMainServer.GetInt())
 	adminRole = int64(confAdminRole.GetInt())
@@ -111,4 +115,9 @@ func requestCheckBotAdmins(skipRename bool, mainServer, adminRole, readOnlyRole 
 
 func HandleGuildMembersChunk(data *eventsystem.EventData) {
 	go BatchMemberJobManager.handleGuildMemberChunk(data)
+}
+
+func IsSpecialGuild(id int64) (whitelisted bool) {
+  common.RedisPool.Do(radix.Cmd(&whitelisted, "SISMEMBER", "special_servers", discordgo.StrID(id)))
+  return
 }
